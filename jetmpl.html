@@ -1,0 +1,83 @@
+
+<!-- These are templates for the Journal Entry Display Reports
+     This file gets loaded, so far, by the index.html file, 
+     via and ajax get method at the top of the document/ready
+     jquery coding script.  This is a critical file!!
+-->
+    <div id="jetmpl" style="display:none" >
+        <table><tbody>	
+            <tr class="r1">
+                <td class="mmslashdd">01/22</td>
+                <td class="acct">621</td>
+                <td class="chartdesc">Gas</td>
+                <td class="amt">62.95</td>
+                <td>&nbsp;</td>
+            </tr>	
+            <tr class="r2">
+                <td> </td>
+                <td class="acct">621</td>
+                <td class="chartdesc">Gas</td>
+                <td class="amt">62.95</td>
+                <td>&nbsp;</td>
+            </tr>	
+            <tr class="rcr">
+                <td>&nbsp;</td>
+                <td class="cract">323</td>
+                <td class="chartdesc">Mobil</td>
+                <td>&nbsp;</td>
+                <td class="desc">Description</td>
+            </tr>
+        </tbody></table>
+    </div> <!-- jetmpl -->
+
+    <div id="jeformtmpl" style="display:none" >
+        <!-- someFormElm.setAttribute( "autocomplete", "off" ); -->
+        <table><tbody>	
+            <tr class="r1">
+                <!-- <td class="mmslashdd">01/</td> -->
+                <td class="mmslashdd">
+<!--                    <span class="mmslash"></span><input class="ddinp" type="text" size=2 maxlength=2>   -->
+                        <span class="mmslash"></span><input class="ddinp" type="text" maxlength=2> 
+                </td>
+                <td class="acct">
+                    <!-- removed size=3 -->
+                    <input  class="acctinp" type="text" maxlength=3>
+                </td>
+                <td class="chartdesc">Gas</td>
+                <td class="amt">
+                    <!-- removed size=9 -->
+                    <input class="amtinp" type="text" maxlength=9>
+                </td>
+                <td>&nbsp;</td>
+            </tr>
+            <tr class="r2">
+                <td> </td>
+                <td class="acct">
+                    <!-- removed size=3 -->
+                    <input class="acctinp" type="text" maxlength=3>
+                </td>
+                <td class="chartdesc">Gas</td>
+                <td class="amt">
+                    <!-- removed size=9 -->
+                    <input class="amtinp" type="text" maxlength=9>
+                </td>
+                <td>&nbsp;</td>
+            </tr>	
+            <tr class="rcr">
+                <td>&nbsp;</td>
+                <td class="cract">
+                    <!-- removed size=3 -->
+                    <input class="cractinp" type="text" maxlength=3>
+                </td>
+                <td class="chartdesc">Mobil</td>
+                <td class="cramt">
+                    <!-- removed size=9 -->
+                    <input class="cramtinp" type="text" maxlength=9>
+                </td>
+                <td class="desc">
+                    <!-- removed size=25 -->
+                    <input class="descinp" type="text" maxlength=25>
+                </td>
+            </tr>
+        </tbody></table>
+    </div> <!-- jeformtmpl -->

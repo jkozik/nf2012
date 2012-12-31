@@ -1,0 +1,318 @@
+    1  ls
+    2  cd pub*
+    3  ls
+    4  cd nf
+    5  ls
+    6  cd ..
+    7  pwd
+    8  cd ..
+    9  ls
+   10  exit
+   11  git config --global user.name "Jack Kozik"
+   12  git config --global user.email "jackkozik@email.com"
+   13  ls -last
+   14  vi .git*
+   15  pwd
+   16  ls
+   17  cd public_html
+   18  ls
+   19  git init
+   20  pwd
+   21  ls
+   22  echo *
+   23  cp -arv  *.php *.html *.ico  css images scripts rest bck/kozik2full101212
+   24  mkdir bck/kozik2full101212
+   25  ll
+   26  pwd
+   27  who am i
+   28  pwd
+   29  who am i
+   30  cp -arv  *.php *.html *.ico  css images scripts rest kozik2full101212
+   31  pwd
+   32  ls
+   33  cp -arv  *.php *.html *.ico  css images scripts rest bckkozik2full101212
+   34  crontab -e
+   35  crontab -l
+   36  pwd
+   37  who am i
+   38  whoami
+   39  pwd
+   40  cd ..
+   41  ls
+   42  cd bckkozik2full*
+   43  ll
+   44  cd pub*
+   45  cd bck
+   46  cd kozik6*
+   47  ls
+   48  cd pub*
+   49  ls
+   50  who am i
+   51  pwd
+   52  cd ~nf/pub*
+   53  mkdir bck/kozik2full101212
+   54  pwd
+   55  ls
+   56  cd bck
+   57  mkdir kozik2full101212
+   58  ls
+   59  cd ..
+   60  mkdir bckkozik2full101212
+   61  pwd
+   62  mv bck bck101212
+   63  mkdir bck
+   64  ll
+   65  pwd
+   66  cd bckpwd
+   67  who am i
+   68  pwd
+   69  who am i
+   70  pwd
+   71  ll
+   72  pwd
+   73  chown -R nf *
+   74  pwd
+   75  ls
+   76  mv bck ..
+   77  mv bck101212 ..
+   78  pwd
+   79  mv bck101212 ~nf/bck101212
+   80  cd 
+   81  ls
+   82  cd pub*
+   83  ls
+   84  mv bck101212 ~nf
+   85  mv bck101212 .bck101212
+   86  ls
+   87  mv bckkozik* ..
+   88  crontab -e
+   89  crontab -l
+   90  who am i
+   91  cd .bck1*
+   92  cd kozik6*
+   93  ls
+   94  cp -arv * ~nf/public_html050412
+   95  who am i
+   96  pwd
+   97  cd ..
+   98  ls
+   99  pwd
+  100  chown -R nf *
+  101  pwd
+  102  su -
+  103  pwd
+  104  ll
+  105  pwd
+  106  cd scripts
+  107  ls
+  108  ll
+  109  pwd
+  110  vi rest
+  111  cd ..
+  112  ls
+  113  vi rest
+  114  pwd
+  115  whoami
+  116  ll
+  117  vi rest
+  118  ls .rest*
+  119  rm .rest.swp
+  120  vi rest
+  121  pwd
+  122  cd ..
+  123  ls
+  124  mv public_html050412 public_htmlnf2011
+  125  cd public_htmlnf2011
+  126  pwd
+  127  ls
+  128  vi README
+  129  ll
+  130  pwd
+  131  git init
+  132  git add .
+  133  git status
+  134  pwd
+  135  git remote add origin https://github.com/jkozik/nf2011
+  136  git commit
+  137  git status
+  138  git tag -a v1.0 -m "Completed Aug 2011"
+  139  git tag
+  140  git show v1.0
+  141  git tag -a v1.0
+  142  pwd
+  143  git commit -m "jsedit completed on Aug 2011, running on k6"
+  144  git push -u origin master
+  145  git remote add
+  146  git remote add origin 
+  147  git remote add origin git@github.com:jkozik/nf2011.git
+  148  git remote
+  149  git remote help
+  150  git remote rm origin
+  151  git remote add origin git@github.com:jkozik/nf2011.git
+  152  git push -u origin master
+  153  pwd
+  154  cd ~
+  155  cd .ssh
+  156  ls
+  157  vi authorized_keys
+  158  ll
+  159  chmod 600 authorized_keys
+  160  cd ../*nf0211*
+  161  cd ..
+  162  ls
+  163  cd *nf2011
+  164  git push -u origin master
+  165  ssh -T git@github.com
+  166  pwd
+  167  cd ..
+  168  cd .ssh
+  169  ls
+  170  vi new
+  171  mv new id_rsa 
+  172  chmod 600 id_rsa
+  173  ll
+  174  ssh -T git@github.com
+  175  git push -u origin master
+  176  pwd
+  177  cd ..
+  178  cd *nf2*
+  179  git push -u origin master
+  180  git status
+  181  pwd
+  182  ls
+  183  git status
+  184  pwd
+  185  git add .
+  186  git status
+  187  pwd
+  188  ls
+  189  git add *
+  190  git status
+  191  pwd
+  192  ls
+  193  cd .git
+  194  ls
+  195  cd ..
+  196  rm -rf .git
+  197  pwd
+  198  git init
+  199  git add .
+  200  git status
+  201  history | commit
+  202  history | grep commit
+  203  git commit -m "jsedit completed on Aug 2011, running on k6"
+  204  history | grep remote
+  205  history | grep push
+  206  git push -u origin master
+  207  git pull  origin master
+  208  git push -u origin master
+  209  cd ../public_html
+  210  ls
+  211  git init
+  212  git add .
+  213  git status
+  214  git rm ?
+  215  git rm
+  216  ls
+  217  ls -a
+  218  git rm --dry-run .bck101212
+  219  git rm --dry-run -r .bck101212
+  220  git rm -r -f .bck101212
+  221  git exclude
+  222  git --help
+  223  git rm -r -f .bck101212
+  224  pwd
+  225  git status
+  226  git rm -r -f .bck101212
+  227  git status
+  228  git init
+  229  ls
+  230  git add *
+  231  git status
+  232  ls
+  233  cd ~
+  234  ls
+  235  ls .*
+  236  ls -last
+  237  pwd
+  238  cd pubic_html
+  239  pwd
+  240  ls
+  241  cd public_html
+  242  ls
+  243  cd .git
+  244  cd info
+  245  ls
+  246  vi exclude
+  247  cd pub*
+  248  vi rest
+  249  exit
+  250  cd pub*
+  251  ls
+  252  vi rest
+  253  exit
+  254  ls -a
+  255  cd .ssh
+  256  ls
+  257  vi id_rsa
+  258  vi auth*
+  259  vi kn*
+  260  vi auth*
+  261  vi id_rsa
+  262  exit
+  263  cd pub*
+  264  ls
+  265  git status
+  266  ls
+  267  ls -a
+  268  cd .git
+  269  ls
+  270  vi config
+  271  history | grep git
+  272  pwd
+  273  cd ..
+  274  ls
+  275  cd public_htmlng2011
+  276  cd public_htmlnf2011
+  277  ls
+  278  ls -a
+  279  cd .git
+  280  ls
+  281  cd logs
+  282  ls
+  283  ll
+  284  vi HEAD
+  285  cd refs
+  286  ls
+  287  cd heads
+  288  ls
+  289  vi master
+  290  cd ..
+  291  ls
+  292  cd ..
+  293  ls
+  294  cd ..
+  295  ls
+  296  vi COMMIT*
+  297  cd ..
+  298  ls
+  299  git status
+  300  pwd
+  301  git list
+  302  git --help
+  303  git show log
+  304  git log
+  305  pwd
+  306  cd ../public_html
+  307  ls
+  308  git log
+  309  pwd
+  310  ls
+  311  git log
+  312  git status
+  313  git status | more
+  314  cd scripts
+  315  ls
+  316  vi jsedit.js
+  317  vi getjefile.php
+  318  history > x.tmp

@@ -1,0 +1,507 @@
+<?php
+/*
+** Valid formats:
+** rest/YY       -- GET: returns all data for all months in year YY
+** rest/YY/MM    -- GET: returns data for month MM; PUT updates/creates.
+**                       PUT prefered POST works the same.
+** rest/YY/chart -- GET: returns chart data
+** rest/yankput.json  -- GET: returns YankPutArray, json formated
+**                    -- PUT: stores YankPutArray, json formated
+**
+** YY - ~nf/YY directory must exist, else 404
+** MM - must 01-12, else 400
+** MM - GET: MM must exist, else 404; 
+**    - PUT: if MM exists overwrite; else, create
+**    - POST: works the same as PUT
+** chart - must exist, else 404
+** if formats not valid, 400 with some hint as to the syntax error
+*/
+
+/* $NFROOT = "c:/nf/"; */
+$NFROOT = "/home/nf/public_html/nf/";
+$mm = '';
+$year = '';
+$method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : '';
+$nav = (isset($_SERVER["REQUEST_URI"])) ? $_SERVER["REQUEST_URI"] : '';
+if ( strpos($nav,"?") !== false ) {
+    $nav = preg_replace('/(^.*)\?.*$/', '${1}', $nav);
+}
+$querystring = (isset($_SERVER["QUERY_STRING"])) ? $_SERVER["QUERY_STRING"] : '';
+$uri = '';
+$chartFileName = '';
+$months = array ("00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12");
+
+/* parse command line, if not called by httpd */
+if ( $nav == '' ) {
+    //echo $_SERVER["argv"][1]."\n";
+    $uri = (isset($_SERVER["argv"][1])) ? $_SERVER["argv"][1] : '';
+    if (substr($uri,0,4) == "uri=") {
+        $uri = substr($uri,4);
+    } else {
+        echo "rest: rest uri=rest/yy/mm\n";
+        exit;
+    }
+    $method = "GET";
+    $nav = $uri;
+
+};
+
+
+
+/* $nav=/rest/05/11  or /rest/yankput.json or /rest/05/chart */
+/* Assume head of $nav is '/rest/' */
+if ( substr($nav,0,6) != "/rest/" ) {
+    _sendResponse(400,'',"The URI should be formated like .../rest/YY/MM. The /rest/ part is missing");
+    exit;
+}
+$nav = substr($nav,6);
+
+
+/* check if yankput.json */
+if ($nav == "yankput.json") {
+
+    $yankputFileName = $NFROOT."yankput.json";
+    $body = "";
+
+    if ($method == "GET") {
+        if (!file_exists($yankputFileName)) {
+            _sendResponse(404,'',"The URI ../rest/yankput.json: The file 'yankput.json' does not exist.");
+            exit;
+        }
+
+        /* yankput.json expires after 60 minutes */
+        $mdate = filemtime( $yankputFileName );
+        if ($mdate && (time()-$mdate>3600) ) {
+            _sendResponse(410,'',"The URI ../rest/yankput.json: The file 'yankput.json' is gone.  It expired after one hour.");
+            exit;
+        }
+
+        $yankputjson = file_get_contents( $yankputFileName );
+        if ($yankputjson !== FALSE ) {
+            $body .= "[\n" . $yankputjson . "]\n";
+            _sendResponse(200,$yankputjson);
+        } else {
+            _sendResponse(400,'',"The URI ../rest/yankput.json: The file 'yankput.json' exists but could not be opened.");
+        }
+    } else if ($method == "PUT") {
+        parse_str(file_get_contents("php://input"),$post_vars);
+        $yankputjson = $post_vars["yankputjson"];
+        $ret = file_put_contents($yankputFileName,$yankputjson);
+        $body="ret-$ret, yankputjson is ".$yankputjson;
+        if ( $ret !== FALSE ) {
+            _sendResponse(200,'',$body);
+        } else {
+            _sendResponse(400,'',"The PUT request to .../rest/yankput.json was unable to write the file to $yankputFileName");
+        }
+    }
+
+    exit;
+}
+
+/* The next two characters must be valid YY: 
+**  $nav=05/11
+**  - 2 digit integer
+**  - ~nf/YY file must exist
+*/
+$year = substr($nav,0,2);
+if (is_numeric($year[0]) && is_numeric($year[1]) ) {
+    if (!is_dir($NFROOT.$year)) {
+        _sendResponse(404,'',"The URI ../rest/YY/MM. The YY directory does not exisit.");
+        exit;
+    }
+} else {
+    _sendResponse(400,'',"The URI ../rest/YY/MM. YY must be numeric.");
+    exit;
+}
+$nav = substr($nav,2);
+
+/* Next char in $nav may be "/" or EOL */
+/* $nav=/11 */
+if (strlen($nav) > 0 && $nav[0] == "/" ) {
+    $nav = substr($nav,1);
+}
+
+/* Expecting file:
+** $nav=11 or $nav=chart or $nav=""
+** - MM  or
+** - chart
+** must be at EOL
+** MM: PUT overwrites or creates; POST works the same. PUT preferred
+** chart must exist.  GET only
+*/
+if ($nav == "chart" || $nav == "chart.json" ) {
+    $chartFileName = $NFROOT.$year."/chart";
+    if (!file_exists($chartFileName)) {
+        _sendResponse(404,'',"The URI ../rest/YY/chart. The file 'chart' does not exist.");
+        exit;
+    }
+} else if (strlen($nav) >= 2) {
+    $mm = substr($nav,0,2);
+    if (is_numeric($mm[0]) && is_numeric($mm[1])&& $mm > "00" && $mm < "13" ) {
+        $jefile = $NFROOT.$year."/".$mm;
+        // it is ok if ../rest/YY/MM does not exisit for PUT
+        //if (!file_exists($jefile))  {
+            //_sendResponse(404,'',"The URI ../rest/YY/MM. The MM file does not exisit.");
+            //exit;
+        //}
+    } else {
+        _sendResponse(400,'',"The URI ../rest/YY/MM. MM  must be 01-12.");
+        exit;
+    }
+} else if ($nav != "") {
+    _sendResponse(400,'',"The URI ../rest/YY/MM. MM  must be 01-12.");
+    exit;
+}
+
+
+/*
+** GET chart
+** /rest/05/chart
+*/
+$body="";
+if ($chartFileName != "") {
+    $chartFileLines = file ( $chartFileName );
+    if ($nav == "chart") {
+        for ($i=0; $i<count($chartFileLines); $i++) {
+            $body = $body.$chartFileLines[$i]."\n<br>";
+        }
+    } else if ($nav == "chart.json") {
+        $body = "{\n";
+
+        for ($i=0; $i<count($chartFileLines); $i++) {
+            $line = rtrim($chartFileLines[$i]);
+            list($codea,$acct,$desc,$prevYearAcct,$subacct) = explode(",",$line . ',,,');
+            if ($subacct == "s") {
+                $sa = "true";
+            } else {
+                $sa = "false";
+            }
+
+            if ($codea != "a") {
+                _sendResponse(400,'',"Error chart record".$i.". First character is not an a.");
+                exit;
+            } else if (strlen($acct)<1 || strlen($acct)>3 || $acct{0} < "1" || $acct{0} > "8") {
+                _sendResponse(400,'',"Error chart record".$i.". Account more than 3 digits or non numeric.");    
+                exit;
+            } else {
+                if($i!=0) $body .= ",";
+                $body .= "\"$acct\": {";
+                    $body .= "\"line\":\"$line\",";
+                    $body .= "\"chDesc\":\"$desc\",";
+                    $body .= "\"subacct\":$sa";
+                $body .= "}\n";
+            }
+        }
+        $body .= "}\n";
+
+
+    }
+    _sendResponse(200,$body,"");
+    exit;
+}
+
+/*
+** GET MM
+** /rest/05/11
+*/
+if ($method == "GET" && $mm!="") {
+    $jefileFileName = $NFROOT.$year."/".$mm;
+    if (!file_exists($jefileFileName)) {
+        _sendResponse(404,'',"The URI ../rest/YY/MM. The MM file does not exisit.");
+        exit;
+    }
+    $jefileLines = file( $jefileFileName );
+    $body = "[\n";
+    $body .= jefiletojson( $jefileLines );
+    $body .= "]\n";
+
+    _sendResponse(200,$body);
+    exit;
+}
+
+/*
+** GET all existing MMs in a year: 00, 01, 02, 03, ..., 12
+** /rest/05
+*/
+if ($method == "GET" && $mm=="") {
+    $body = "{";
+    foreach( $months as $m ) {
+        $jefileFileName = $NFROOT.$year."/".$m;
+        if ( file_exists( $jefileFileName ) ) {
+            $jefileLines = file( $jefileFileName );
+            if ( $m != "00" ) { $body .= ","; };
+            $body .= "\"".$m."\":[\n";
+            $body .= jefiletojson( $jefileLines );
+            $body .= "]\n";
+        }
+    }
+    $body .= "}";
+
+    _sendResponse(200,$body);
+    exit;
+}
+
+/*
+** For each line in the jefile[]:
+** jefile[i]: 0501,-101,150.00;777,1.50;101;-description
+** json output: {"mmdd":,"0501","actamt":{{"acct":"101","amt":"150.00"},...},"cract":"101","desc":"description"}
+**
+** Special case:  Beginning Balance file - "00"
+** 0000,101,12756.02,Balance Forward
+** json output: {"mmdd":"0000", "actamt":{{"acct":"101","amt":"12756.02"}},"cract":null,"desc":"Balance Forward"}
+**
+*/
+function jefiletojson( $jefileLines ) {
+    $jsonstr = "";
+
+/* If file is "00", a balance forward file... */
+
+$line = rtrim($jefileLines[0]);
+if (preg_match("/^0000,\d\d[0-9a-z],.*\.\d\d,Balance Forward$/", $line)) {
+   for ($i=0; $i<count($jefileLines); $i++) {
+      if($i!=0) $jsonstr .= ",";
+      $line = rtrim($jefileLines[$i]);
+      list( $mmdd, $acct, $amt, $desc ) = explode(",", $line);
+      $jsonstr .= "{";
+      $jsonstr .= "\"line\":\"$line\",\n";
+      $jsonstr .= "\"mmdd\":\"$mmdd\",";
+      $jsonstr .= "\"acctamt\":[{\"acct\":\"$acct\",\"amt\":\"$amt\"}],";
+      $jsonstr .= "\"cract\":null,";
+      $jsonstr .= "\"desc\":\"$desc\"";
+      $jsonstr .= "}\n";
+   }
+   return $jsonstr;
+}
+
+
+/* Otherwise, assume normal monthly Journal files */
+
+    for ($i=0; $i<count($jefileLines); $i++) {
+        if($i!=0) $jsonstr .= ",";
+        $line = rtrim($jefileLines[$i]);
+        $desc = jefileParseDesc($line);
+        $mmdd = substr($line,0,4);
+        $cract = substr($line,strpos($line,";")+1,3);
+        $cract = preg_replace('/^(.*;)(\d\d[a-z0-9])(-.*$)/','${2}',$line);
+        $acctamt = jefileParseAcctAmt($line);
+        $jsonstr .= "{";
+          $jsonstr .= "\"line\":\"$line\",\n";
+          $jsonstr .= "\"mmdd\":\"$mmdd\",";
+          $jsonstr .= "\"acctamt\":$acctamt," ;
+          $jsonstr .= "\"cract\":\"$cract\",";
+          $jsonstr .= "\"desc\":\"$desc\"";;
+        $jsonstr .= "}" .  "\n";
+    }
+    return $jsonstr;
+}
+/*
+** PUT MM 
+*/
+//if ($method == "POST" && $mm!="") {
+    //$jefileFileName = "/home/nf/public_html/nf/".$year."/".$mm;
+    //$body = $_POST["test"];
+    //_sendResponse(200,$body);
+//}
+if ($method == "PUT" && $mm!="") {
+    parse_str(file_get_contents("php://input"),$post_vars);
+    $jefileFileName = $NFROOT.$year."/".$mm;
+    $backupDir = $NFROOT.$year."/bck";
+    if( $post_vars["jefilename"] == $mm ) {
+        if (!is_dir($backupDir)) mkdir($backupDir);
+        $jefileBckName = $backupDir."/".$mm.".".date("YmdHis");
+        if (file_exists($jefileFileName)) copy( $jefileFileName, $jefileBckName);
+        $jefilejson = $post_vars["jefilejson"];
+        file_put_contents($jefileFileName.".json",$jefilejson);
+        $jefile = json_decode( $jefilejson );
+        $jefileMM = jefileArrayofObjectsToMMfile($jefile);
+        file_put_contents($jefileFileName,$jefileMM);
+        _sendResponse(200,$body);
+        exit;
+    } else {
+        _sendResponse(400,'',"The PUT request to .../rest/".$year."/".$mm." returns a message body with jefilename != ".$mm);
+        exit;
+    }
+}
+
+/*
+** Convert the $jefile array of objects into the jefile format:
+** 
+** jefileMM: 0501,-101,150.00;777,1.50;101;-description
+*/
+
+function jefileArrayofObjectsToMMfile($jefile) {
+
+    $jefileMM = "";
+    for ($i=0; $i<count($jefile); $i++) {
+        $aar = $jefile[$i]->acctamt;
+        $jefileMM .= $jefile[$i]->mmdd.",-";
+        for ($j=0; $j<count($aar); $j++) {
+            $jefileMM .= $aar[$j]->acct.",";
+            $jefileMM .= $aar[$j]->amt.";";
+        }
+        $jefileMM .= $jefile[$i]->cract."-";
+        $desc = $jefile[$i]->desc;
+        if ( $desc != "" ) {
+            $jefileMM .= ",".$desc;
+        }
+        $jefileMM .= "\n";
+    }
+    return $jefileMM;
+}
+
+/*
+** Parse the Account / Amount pairs from the current jefile[] line
+*/
+
+function jefileParseAcctAmt($line) {
+
+$begpos = strpos($line,",-");
+$line = substr($line, $begpos+2);
+$lineJson =  "[";
+for ($aaidx = 0; $line{3}==",";$aaidx++) {
+    $eon = strpos($line,";");
+    $acct = substr($line, 0, 3);
+    $amt = substr($line, 4, $eon-4);
+    if ($aaidx != 0) {$lineJson .= ",";};
+    $lineJson .=  "{". "\"acct\":"."\"$acct\","."\"amt\":"."\"$amt\"". "}";
+    $line = substr($line, $eon+1);
+
+}
+$lineJson .=  "]";  // close acctamt array of objects
+
+return $lineJson;
+} // function AcctAmt
+
+function jefileParseDesc($line) {
+  $len=strlen($line);
+  if ($line[$len-1]==";" && $line[$len-1]=="-") {
+          return "";
+  } else {
+          $sod = strpos($line,"-,");
+          if ($sod !== false) {
+                  return substr($line, $sod+2);
+          } else {
+                  return "";
+          }
+  }
+
+}
+
+
+
+/****************************
+var_dump($_SERVER);
+$method = $_SERVER['REQUEST_METHOD'];
+$nav = $_SERVER["REQUEST_URI"];
+$script = $_SERVER["SCRIPT_NAME"];
+echo "test";
+echo "<br>";
+echo "nav=".$nav."\n";
+echo "<br>";
+echo "script=".$script."\n";
+echo "<br>";
+echo "method=".$method."\n";
+echo "<br>";
+echo "year=".$year."\n";
+echo "<br>";
+echo "mm=".$mm."\n";
+echo "<br>";
+echo "chartFileName=".$chartFileName."\n";
+echo "<br>";
+*******************************/
+
+/*
+** Function: sendResponse
+**
+** Code cut/paste from
+**      http://www.yiiframework.com/wiki/175/how-to-create-a-rest-api/
+**      http://www.gen-x-design.com/archives/create-a-rest-api-with-php
+*/
+function _sendResponse($status = 200, $body = '', $comment, $content_type = 'text/html')
+{
+    // set the status
+    $status_header = 'HTTP/1.1 ' . $status . ' ' . _getStatusCodeMessage($status);
+    header($status_header);
+    // and the content type
+    header('Content-type: ' . $content_type);
+ 
+    // pages with body are easy
+    if($body != '')
+    {
+        // send the body
+        echo $body;
+        exit;
+    }
+    // we need to create the body if none is passed
+    else
+    {
+        // create some body messages
+        $message = '';
+ 
+        // this is purely optional, but makes the pages a little nicer to read
+        // for your users.  Since you won't likely send a lot of different status codes,
+        // this also shouldn't be too ponderous to maintain
+        switch($status)
+        {
+            case 401:
+                $message = 'You must be authorized to view this page.';
+                break;
+            case 404:
+                $message = 'The requested URL ' . $_SERVER['REQUEST_URI'] . ' was not found.';
+                break;
+            case 500:
+                $message = 'The server encountered an error processing your request.';
+                break;
+            case 501:
+                $message = 'The requested method is not implemented.';
+                break;
+        }
+ 
+        // servers don't always have a signature turned on 
+        // (this is an apache directive "ServerSignature On")
+        //$signature = ($_SERVER['SERVER_SIGNATURE'] == '') ? $_SERVER['SERVER_SOFTWARE'] . ' Server at ' . $_SERVER['SERVER_NAME'] . ' Port ' . $_SERVER['SERVER_PORT'] : $_SERVER['SERVER_SIGNATURE'];
+ 
+        $signature = "";
+        // this should be templated in a real-world solution
+        $body = '
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+    <title>' . $status . ' ' . _getStatusCodeMessage($status) . '</title>
+</head>
+<body>
+    <h1>' . _getStatusCodeMessage($status) . '</h1>
+    <p>' . $message . '</p>
+    <p>' . $comment . '</p>
+    <hr />
+    <address>' . $signature . '</address>
+</body>
+</html>';
+ 
+        echo $body;
+        exit;
+    }
+}
+
+function _getStatusCodeMessage($status)
+{
+    // these could be stored in a .ini file and loaded
+    // via parse_ini_file()... however, this will suffice
+    // for an example
+    $codes = Array(
+        200 => 'OK',
+        400 => 'Bad Request',
+        401 => 'Unauthorized',
+        402 => 'Payment Required',
+        403 => 'Forbidden',
+        404 => 'Not Found',
+        500 => 'Internal Server Error',
+        501 => 'Not Implemented',
+    );
+    return (isset($codes[$status])) ? $codes[$status] : '';
+}
+
+
+
+?>

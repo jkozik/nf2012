@@ -1,0 +1,416 @@
+/*-----------------------------------------------------------------------------
+[client] Screen Stylesheet
+
+version:   1.0
+date:      01/03/07
+author:    [your name]
+email:     [you at domain dot com]
+
+website:   [your domain]
+
+version history: [location of file]
+-----------------------------------------------------------------------------*/
+
+
+/* Import other stylesheets
+-----------------------------------------------------------------------------*/
+
+/* @import url("otherstylesheet.css"); */
+
+
+/* Remove margin, padding and border from everything
+-----------------------------------------------------------------------------*/
+
+* 
+	{
+	margin: 0;
+	padding: 0;
+	
+	border: 0;
+}
+
+/* Styles for layout
+-----------------------------------------------------------------------------*/
+
+
+/* New Clear Fix 
+** - from ttp://nicolasgallagher.com/micro-clearfix-hack/
+** - and html5 boilerplate
+*/
+
+
+/* Contain floats: h5bp.com/q */ 
+.clearfix:before, .clearfix:after { content: ""; display: table; }
+.clearfix:after { clear: both; }
+.clearfix { zoom: 1; }
+.clearfix { 
+      zoom: 1;
+}
+
+
+
+
+/* Set up the document
+-----------------------------------------------------------------------------*/
+
+body
+	{
+	font: 100%/normal  "Courier New";
+	/* color: green;	print */
+	/* background-color: black; print */
+}
+
+/*
+
+
+
+
+/* Structure */
+
+
+
+
+
+#head {
+
+    display: none;    /* print */
+    /*width:1060px;*/
+    width:960px;
+    height:18px;
+    margin:0px auto;
+    margin-top:0px;
+    padding:0px;
+    position: fixed;
+    /* font-size:1em; */
+
+    }
+
+
+#foot{
+    display: none; /* print */
+    position: fixed;
+    width:960px;
+    height:18px;
+    margin:0px auto;
+    margin-top:0px;
+    padding:0px;
+    bottom:0;
+    background: black;
+    color: white;
+    z-index: 2000;
+}
+
+
+#page {
+
+    /*width:1060px;*/
+    width:960px;
+    /* margin:0px auto;      print */
+    padding:0px;
+    padding-top:18px;
+    font-size:1em;
+    }
+
+
+
+
+/* Typography
+-----------------------------------------------------------------------------*/
+
+h1
+	{
+	font-size: 2.2em; /* Equivalent to 22pt */
+}
+	
+h2
+	{
+	font-size: 2.0em; /* Equivalent to 20pt */
+}
+	
+h3
+	{
+	font-size: 1.8em; /* Equivalent to 18pt */
+}
+	
+h4
+	{
+	font-size: 1.6em; /* Equivalent to 18pt */
+}
+	
+h5
+	{
+	font-size: 1.4em; /* Equivalent to 14pt */
+}
+	
+p, q, cite
+	{
+	font-size: 1em; /* Equivalent to 12pt */
+}
+
+ul, ol, dl
+	{
+	list-style: none;
+	/* font-size: 1.2em;  Equivalent to 12pt */
+}
+
+li, dd, dt
+	{
+	/* font-size: 1.2em;  Equivalent to 12pt */	
+}
+
+/* Header
+-----------------------------------------------------------------------------*/
+
+
+
+/* Navigation
+-----------------------------------------------------------------------------*/
+/* Navigation Bar*/
+
+#navbar {
+    background:blue;
+	color:white;
+    }
+
+/*
+** This is a Son of Suckerfish style dropdown menu.
+** http://www.htmldog.com/articles/suckerfish/dropdowns/
+** I want to improve by having the dropdowns disappear on click, today
+** they don't.
+*/
+
+
+#page-bar {
+
+
+    }
+
+
+
+#page-bar ul {
+    list-style: none;
+    }
+
+#page-bar li {
+    float:left;
+    list-style:none;
+    cursor: pointer;
+    display:block;
+    border-left:1px solid #515151;  /* Dark Grey */
+    width:80px;
+    }
+    
+#page-bar li.first{
+    border-left:none;
+    }
+
+
+#page-bar li:hover {
+    background: #ab0000;   /* sanguine blush (red) */
+    }
+
+
+#page-bar li li {
+    float: left;
+    margin: 0px;
+    padding: 0px;
+    text-transform:none;
+    }
+
+
+#page-bar li li p {
+    background: blue;
+    float: none;
+    margin: 0px;
+    padding: 5px 10px 5px 5px; 
+    border-top: 1px solid #C0C0C0;  /* Silver */
+    }
+
+#page-bar li li p:hover {
+    background: #666666;   /* 40% Grey */
+
+    }
+
+#page-bar li ul {
+    position: absolute;
+    width: 80px;
+    left: -999em;
+    }
+
+#page-bar li:hover ul {
+    left: auto;
+    display: block;
+    }
+
+#statusfield {
+	width: 19em;
+	float: right;	
+}
+
+#dialog {
+	display:none;
+	font: 100%/normal  "Courier New";
+	color: white;	
+	background-color: black;
+
+}
+#dialogError {
+	display:none;
+	font: 100%/normal  "Courier New";
+	color: red;	
+	background-color: black;
+	
+}
+
+#ui-dialog-title-dialog, .ui-button-text,  .ui-widget input{
+	font: 100%/normal  "Courier New";	
+}
+
+
+/* Footer
+-----------------------------------------------------------------------------*/
+
+
+
+/* Homepage
+-----------------------------------------------------------------------------*/
+#container {
+    float: left;
+    width: 100%;
+    margin-bottom: 2em;
+	/* background-color: black;     print */
+}
+
+/* Your template
+-----------------------------------------------------------------------------*/
+
+
+/* Chart of Accounts Menu
+-----------------------------------------------------------------------------*/
+
+#chartMenu {
+    position: fixed;
+    top: 59px;
+    left: 600px;
+    width: 35ex;
+    color: white;
+    background: red;
+    font-size: 1em;
+    border-style: double;
+    border-width: 6px;
+    z-index: 500;
+}
+
+
+
+
+/* Forms
+-----------------------------------------------------------------------------*/
+
+
+input.text, .ddinp, .acctinp, .cractinp, .cramtinp, .amtinp, .descinp 
+	{
+    font: 100%/normal  "Courier New";
+    font-size: 1em;
+    background:#696969;  /* DimGray */
+    color: #7CFC00; /*LawnGreen*/
+    margin-top:1px;
+    margin-bottom:1px
+}
+
+.idleField{  
+    /***
+    background:DimGray;
+    color: LawnGreen;
+    ***/
+    background:#696969;  /* DimGray */
+    color: #7CFC00; /*LawnGreen*/
+}
+.focusField{  
+    background:#00FFFF; /*cyan*/
+    color:#000;  
+} 
+
+/* Tables 
+-----------------------------------------------------------------------------*/
+
+
+
+table
+ 	
+	{ 
+  	border-spacing: 0;
+	border-collapse: collapse;
+}
+
+td 
+	
+	{
+  	text-align: left;
+	font-weight: normal;
+}
+td.input {
+    text-align: right;
+}
+
+/* Rows 
+-----------------------------------------------------------------------------*/
+
+
+
+.mmslashdd {
+    width: 8ex; /*     01/11 5 characters */
+    /*width: 50px;     01/11 5 characters */
+    text-align:left;
+}
+
+.mmslash {
+    width: 3ex; /*     01/ 3 characters */
+}
+
+.ddinp {
+    width: 3ex; /*     11 2 characters */
+    margin: 0px auto;
+}
+
+.acct,.cract {
+    width: 5ex;
+    /* margin:0px auto; */
+    padding-left:0ex;
+
+}
+.acctinp,.cractinp {
+    width: 5ex;
+    margin:0px auto;
+
+}
+
+.chartdesc {
+    width: 35ex;
+    padding-left:1ex;
+    left: 1ex;
+}
+
+.desc  {
+    width: 45ex;
+	padding-left:1ex;
+}
+.descinp {
+    width: 45ex;
+}
+
+.amt, .cramt {
+    width: 14ex;
+    text-align: right;
+}
+.amtinp, .cramtinp {
+    width: 14ex;
+    text-align: right;
+}
+
+
+.displayTableEntryhighlight {
+    background-color: white;
+    color: black;
+}
+

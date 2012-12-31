@@ -1,0 +1,325 @@
+/*-----------------------------------------------------------------------------
+Main style sheet for jsedit.js application
+-----------------------------------------------------------------------------*/
+
+/*
+*
+        {
+        margin: 0;
+        padding: 0;
+        border: 0;
+}
+*/
+
+
+/* Styles for layout
+-----------------------------------------------------------------------------*/
+
+
+/* Set up the document
+-----------------------------------------------------------------------------*/
+
+body   {
+	font: 100%/normal  "Courier New";
+	color: green;	
+	background-color: black;
+}
+
+
+
+/* Structure */
+
+#head {
+    width:960px;
+    height:18px;
+    margin:0px auto;
+    margin-top:0px;
+    padding:0px;
+    position: fixed;
+
+    }
+
+
+#foot{
+    position: fixed;
+    width:960px;
+    height:18px;
+    margin:0px auto;
+    margin-top:0px;
+    padding:0px;
+    bottom:0;
+    background: black;
+    color: white;
+    z-index: 2000;
+}
+
+
+#page {
+    width:960px;
+    margin:0px auto;
+    padding:0px;
+    padding-top:18px;
+    font-size:1em;
+    }
+
+
+
+/* Navigation
+-----------------------------------------------------------------------------*/
+/* Navigation Bar*/
+
+#navbar {
+    background:blue;
+	color:white;
+    }
+
+/*
+** This is a Son of Suckerfish style dropdown menu.
+** http://www.htmldog.com/articles/suckerfish/dropdowns/
+** I want to improve by having the dropdowns disappear on click, today
+** they don't.
+*/
+
+
+#page-bar {
+
+
+    }
+
+#page-bar ul {
+    list-style: none;
+    }
+
+#page-bar li {
+    float:left;
+    list-style:none;
+    cursor: pointer;
+    display:block;
+    border-left:1px solid #515151;  /* Dark Grey */
+    width:80px;
+    }
+    
+#page-bar li.first{
+    border-left:none;
+    }
+
+
+#page-bar li:hover {
+    background: #ab0000;   /* sanguine blush (red) */
+    }
+
+
+#page-bar li li {
+    float: left;
+    margin: 0px;
+    padding: 0px;
+    text-transform:none;
+    }
+
+
+#page-bar li li p {
+    background: blue;
+    float: none;
+    margin: 0px;
+    padding: 5px 10px 5px 5px; 
+    border-top: 1px solid #C0C0C0;  /* Silver */
+    }
+
+#page-bar li li p:hover {
+    background: #666666;   /* 40% Grey */
+    }
+
+#page-bar li ul {
+    position: absolute;
+    width: 80px;
+    left: -999em;
+    }
+
+#page-bar li:hover ul {
+    left: auto;
+    display: block;
+    }
+
+#statusfield {
+	width: 19em;
+	float: right;	
+}
+
+#dialog {
+	display:none;
+	font: 100%/normal  "Courier New";
+	color: white;	
+	background-color: black;
+}
+
+#dialogError {
+	display:none;
+	font: 100%/normal  "Courier New";
+	color: red;	
+	background-color: black;
+}
+
+#ui-dialog-title-dialog, .ui-button-text,  .ui-widget input{
+	font: 100%/normal  "Courier New";	
+}
+
+
+
+/* Homepage
+-----------------------------------------------------------------------------*/
+#container {
+    float: left;
+    width: 100%;
+    margin-bottom: 2em;
+}
+
+
+/* Chart of Accounts Menu
+-----------------------------------------------------------------------------*/
+
+#chartMenu {
+    position: fixed;
+    top: 59px;
+    left: 600px;
+    width: 35ex;
+    color: white;
+    background: red;
+    font-size: 1em;
+    border-style: double;
+    border-width: 6px;
+    z-index: 500;
+}
+
+
+
+
+/* Forms
+-----------------------------------------------------------------------------*/
+
+
+.ddinp, .acctinp, .cractinp, .cramtinp, .amtinp, .descinp
+	{
+    font: 100%/normal  "Courier New";
+    font-size: 1em;
+    background:#696969;  /* DimGray */
+    color: #7CFC00; /*LawnGreen*/
+    margin-top:1px;
+    margin-bottom:1px
+}
+
+.idleField{  
+    /***
+    background:DimGray;
+    color: LawnGreen;
+    ***/
+    background:#696969;  /* DimGray */
+    color: #7CFC00; /*LawnGreen*/
+}
+.focusField{  
+    background:#00FFFF; /*cyan*/
+    color:#000;  
+} 
+
+/* Tables 
+-----------------------------------------------------------------------------*/
+
+td {
+  	text-align: left;
+	font-weight: normal;
+	padding: 0;
+}
+
+td input {
+        padding: 0;
+        border: 0;
+}
+
+pre {
+    margin: 0;
+}
+
+
+/* Rows 
+-----------------------------------------------------------------------------*/
+
+
+
+.mmslashdd {
+    width: 8ex; /*     01/11 5 characters */
+    text-align:left;
+}
+
+.mmslash {
+    width: 3ex; /*     01/ 3 characters */
+}
+
+.ddinp {
+    width: 3ex; /*     11 2 characters */
+    margin: 0px auto;
+}
+
+.acct,.cract {
+    width: 5ex;
+    padding-left:0ex;
+
+}
+.acctinp,.cractinp {
+    width: 5ex;
+    margin:0px auto;
+
+}
+
+.chartdesc {
+    width: 35ex;
+    padding-left:1ex;
+    left: 1ex;
+}
+
+.desc  {
+    width: 45ex;
+	padding-left:1ex;
+}
+.descinp {
+    width: 45ex;
+}
+
+.amt, .cramt {
+    width: 14ex;
+    text-align: right;
+}
+.amtinp, .cramtinp {
+    width: 14ex;
+    text-align: right;
+}
+
+
+.displayTableEntryhighlight {
+    background-color: white;
+    color: black;
+}
+
+
+/* ==|== print styles =======================================================
+   Print styles.
+   Inlined to avoid required HTTP connection: h5bp.com/r
+   ========================================================================== */
+
+@media print { 
+  * { background: transparent !important; color: black !important; text-shadow: none !important; filter:none !important; -ms-filter: none !important; } /* Black prints faster: h5bp.com/s */
+  a, a:visited { text-decoration: underline; }
+  a[href]:after { content: " (" attr(href) ")"; }
+  abbr[title]:after { content: " (" attr(title) ")"; }
+  .ir a:after, a[href^="javascript:"]:after, a[href^="#"]:after { content: ""; }  /* Don't show links for images, or javascript/internal links */
+  /* pre, blockquote { border: 1px solid #999; page-break-inside: avoid; } */
+  tbody { border: 1px solid #999; } */
+  pre, blockquote { page-break-inside: avoid; }
+  thead { display: table-header-group; } /* h5bp.com/t */
+  tbody, tr, img { page-break-inside: avoid; }
+  img { max-width: 100% !important; }
+  @page { margin: 0.5cm; }
+  p, h2, h3 { orphans: 3; widows: 3; }
+  h2, h3 { page-break-after: avoid; }
+  #head, #foot { display: none; }
+}  
+
+
