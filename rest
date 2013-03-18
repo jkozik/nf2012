@@ -17,8 +17,25 @@
 ** if formats not valid, 400 with some hint as to the syntax error
 */
 
-/* $NFROOT = "c:/nf/"; */
+/***
+$NFROOT = "c:/nf/"; 
 $NFROOT = "/home/nf/public_html/nf/";
+***/
+
+/***
+if ( $_SERVER['HTTP_HOST'] == "cisco163.kozikfamily.net" ) {
+        $NFROOT = "c:/nf/";
+} else {
+    $NFROOT = "/home/nf/public_html/nf/";
+}
+***/
+
+if ( is_dir('c:/nf')) {
+	$NFROOT = "c:/nf/";
+} else {
+    $NFROOT = "/home/nf/public_html/nf/";
+}
+
 $mm = '';
 $year = '';
 $method = (isset($_SERVER['REQUEST_METHOD'])) ? $_SERVER['REQUEST_METHOD'] : '';
@@ -113,7 +130,19 @@ if (is_numeric($year[0]) && is_numeric($year[1]) ) {
     _sendResponse(400,'',"The URI ../rest/YY/MM. YY must be numeric.");
     exit;
 }
+
+/* Calculate next year's directory,  YY+1 */
+if ($year == "99") {
+    $yearpp = "00";
+} else {
+    $yearpp = sprintf("%02d",$year+1);
+}
+$nextyeardir = $NFROOT.$yearpp;
+
+
 $nav = substr($nav,2);
+
+
 
 /* Next char in $nav may be "/" or EOL */
 /* $nav=/11 */
@@ -129,6 +158,158 @@ if (strlen($nav) > 0 && $nav[0] == "/" ) {
 ** MM: PUT overwrites or creates; POST works the same. PUT preferred
 ** chart must exist.  GET only
 */
+
+/*
+** Inserting code for mkchart
+*/
+if ($nav == "mkchart") {
+    //_sendResponse(400, '', "The ../rest/YY/mkchart method is still being written");
+    //exit;
+    $body="";
+    //$body .= "running mkchart\n";
+    $body .= "<pre>".`php mkchart.php -y$year -f$NFROOT ; echo retval=$?; echo`."</pre>";
+    //$body .= `pwd`;
+    $status = preg_replace( '/^.*status=(\d\d\d).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) { 
+        $status = 200; 
+    };
+    $message = preg_replace( '/^.*message=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) {
+        $message = "";
+    };
+    $body .= "count=$count, status=$status, message='$message'\n";
+    $body .= "\n";
+    _sendResponse($status,$body,$message);
+}
+
+/*
+** Inserting code for close
+** The close.php command does a year end closing for the current year, $year, and
+** generates a beginning balance file for $year+1.
+*/
+if ($nav == "close") {
+    $body="";
+    $body .= "<pre>".`php close.php -y$year -f$NFROOT ; echo retval=$?; echo`."</pre>";
+    $status = preg_replace( '/^.*status=(\d\d\d).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) {
+        $status = 200; 
+    };
+    $message = preg_replace( '/^.*message=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) {
+        $message = "";
+    };
+    $body .= "count=$count, status=$status, message='$message'\n";
+    $body .= "\n";
+    _sendResponse($status,$body,$message);
+}
+
+
+/*
+** Inserting code for diffnew00
+** This command diffs between the newly created beginning balance file, new00, and the 
+** existing begbal file, 00.
+** diff $nextyeardir/new00 $nextyeardir/00
+** The command must
+** - verify $nextyeardir/new00 exists, else error: run close first
+** - verify $nextyeardir/00 exists.  If not, return error: ok to copy new00 -> 00
+** - run diff, if perfect match (no diff output), return 200; else return diff output and 200
+** Study point:  will this work on a Win7 PC
+*/
+if ($nav == "diffnew00") {
+    /* new00 -- file exist?  If not, nothing to diff.  Need to run close first. */
+    if (!file_exists($nextyeardir."/new00")) {
+        $message = "$nextyeardir/new00 does not exist. Run close.";
+        $status = 500;
+        $body = "";
+        $body .= "status=$status, message='$message'\n";
+        _sendResponse($status,$body,$message);
+        exit;
+    };
+
+    /* 00 -- file exist?  If not, that's ok.  Nothing to diff.  It's ok to copy new00 to 00. */
+    if (!file_exists($nextyeardir."/00")) {
+        $message = "$nextyeardir/00 does not exist. Nothing to 'diff' ";
+        $status = 500;
+        $body = "";
+        $body .= "status=$status, message='$message'\n";
+        _sendResponse($status,$body,$message);
+        exit;
+    };
+
+    $body="";
+    $body .= "<pre>".`diff $nextyeardir/new00 $nextyeardir/00 ; echo retval=$?; echo`."</pre>";
+    $diffretcode = preg_replace( '/^.*retval=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) {
+        $status = 200; 
+        $message = "diff new00 00 runs successfully.";
+    } else if ( $diffretcode == 0 ) {
+        $status = 200;
+        $message = "new00 exactly matches 00";
+    } else if ( $diffretcode == 1 ) {
+        $status = 200;
+        $message = "diff new00 00 returns some differences.";
+    } else if ( $diffretcode == 2) {
+        $status = 500;
+        $message = "diff: file not found.";
+    } else {
+        $status = 500;
+        $message = "unrecognized diff return code.";
+    }
+    $body .= "count=$count, status=$status, message='$message'\n";
+    $body .= "\n";
+    _sendResponse($status,$body,$message);
+}
+
+/*
+** Inserting code for copynew00
+** This command diffs between the newly created beginning balance file, new00, and the 
+** existing begbal file, 00.
+** diff $nextyeardir/new00 $nextyeardir/00
+** The command must
+** - verify $nextyeardir/new00 exists, else error: run close first
+** - verify $nextyeardir/00 exists.  If not, return error: ok to copy new00 -> 00
+** - run diff, if perfect match (no diff output), return 200; else return diff output and 200
+** Study point:  will this work on a Win7 PC
+*/
+if ($nav == "copynew00") {
+    /* new00 -- file exist?  If not, nothing to copy.  Need to run close first. */
+    if (!file_exists($nextyeardir."/new00")) {
+        $message = "$nextyeardir/new00 does not exist. Run close.";
+        $status = 500;
+        $body = "";
+        $body .= "status=$status, message='$message'\n";
+        _sendResponse($status,$body,$message);
+        exit;
+    };
+
+    /* 00 -- file exist?  If not, that's ok.  Otherwise, let's make a backup copy.  For now, it is okay for this to silently fail */
+    if (!file_exists($nextyeardir."/00")) {
+        `cp $nextyeardir/new00 $nextyeardir/00`;
+    };
+
+    $body="";
+    $body .= "<pre>".`cp $nextyeardir/new00 $nextyeardir/00 ; echo retval=$?; echo`."</pre>";
+    $copyretcode = preg_replace( '/^.*retval=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
+    if ($count == 0 ) {
+        $status = 200; 
+        $message = "copy new00 00 runs successfully.";
+    } else if ( $copyretcode == 0 ) {
+        $status = 200;
+        $message = "cp new00 00 successful.";
+    } else if ( $copyretcode == 1 ) {
+        $status = 500;
+        $message = "cp new00 00 copy failed.";
+    } else {
+        $status = 500;
+        $message = "unrecognized copy return code.";
+    }
+    $body .= "count=$count, status=$status, message='$message'\n";
+    $body .= "\n";
+    _sendResponse($status,$body,$message);
+}
+
+
+
 if ($nav == "chart" || $nav == "chart.json" ) {
     $chartFileName = $NFROOT.$year."/chart";
     if (!file_exists($chartFileName)) {
@@ -211,6 +392,10 @@ if ($method == "GET" && $mm!="") {
         exit;
     }
     $jefileLines = file( $jefileFileName );
+    if ( $jefileLines == FALSE ) {
+        _sendResponse(404,'',"The URI ../rest/YY/MM. The MM file cannot be opened.");
+        exit;
+    }
     $body = "[\n";
     $body .= jefiletojson( $jefileLines );
     $body .= "]\n";
@@ -229,6 +414,7 @@ if ($method == "GET" && $mm=="") {
         $jefileFileName = $NFROOT.$year."/".$m;
         if ( file_exists( $jefileFileName ) ) {
             $jefileLines = file( $jefileFileName );
+            if ( $jefileLines == FALSE ) continue;
             if ( $m != "00" ) { $body .= ","; };
             $body .= "\"".$m."\":[\n";
             $body .= jefiletojson( $jefileLines );
@@ -417,7 +603,7 @@ echo "<br>";
 **      http://www.yiiframework.com/wiki/175/how-to-create-a-rest-api/
 **      http://www.gen-x-design.com/archives/create-a-rest-api-with-php
 */
-function _sendResponse($status = 200, $body = '', $comment, $content_type = 'text/html')
+function _sendResponse($status = 200, $body = '', $comment = '', $content_type = 'text/html')
 {
     // set the status
     $status_header = 'HTTP/1.1 ' . $status . ' ' . _getStatusCodeMessage($status);

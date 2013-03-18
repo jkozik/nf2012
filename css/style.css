@@ -188,6 +188,11 @@ input[type="search"]::-webkit-search-decoration { -webkit-appearance: none; }
 
 button::-moz-focus-inner, input::-moz-focus-inner { border: 0; padding: 0; }
 
+.ui-button-text {
+	font-family: "Trebuchet MS", "Helvetica", "Arial",  "Verdana", "sans-serif";
+	font-size: 62.5%;
+}
+
 /* 
  * 1. Remove default vertical scrollbar in IE6/7/8/9 
  * 2. Allow only vertical resizing

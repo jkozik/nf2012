@@ -162,6 +162,10 @@ body   {
 #ui-dialog-title-dialog, .ui-button-text,  .ui-widget input{
 	font: 100%/normal  "Courier New";	
 }
+.ui-button-text-only .ui-button-text {
+    padding: .1em .1em;
+    line-height: 1.0;
+}
 
 
 

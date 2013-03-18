@@ -1248,6 +1248,31 @@ $('#menuLog').click(function() {
 
 });
 
+/* Report->Close */
+$('#menuClose').click(function() {
+    console.info("menuClose click function called");
+    if (JS.jefileOpen === true && JS.jefileChanged === true) {
+        /* Logging */
+        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+        JS.logHtml += "<br>Report->Log: file opened and contents has changed. Save file without prompting";
+        JS.logHtml += "</pre></td></tr></tbody>";
+        console.log("menuClose:  file opened and contents has changed, save file without prompting" );
+
+        $("#menuSave").click();
+    }
+
+    if (typeof dialogCloseSubmit == "undefined") {
+        dynamicallyLoadJSFile('scripts/close.js?q=123', function(){
+            console.log('dynamicallyLoadJSFile: Load close.js was performed.');
+            dialogCloseSubmit();
+        });
+    } else {
+        dialogCloseSubmit();
+    }
+});
+
+
+
 /* Report->Search */
 $('#menuReportSearch').click(function() {
     console.info("menuReportSearch click function called");
@@ -2437,7 +2462,15 @@ function row1fn(jefrec) {
 	mmslashdd = jefrec.mmdd.substring(0,2)+"/"+jefrec.mmdd.substring(2);
 	row1.find(".mmslashdd").text(mmslashdd);
 	row1.find(".acct").text(jefrec.acctamt[0].acct);
-	row1.find(".chartdesc").text(JS.chart[jefrec.acctamt[0].acct].chDesc);
+
+        var tempChartObj = JS.chart[jefrec.acctamt[0].acct];
+        if (tempChartObj == undefined ) {
+            tempchDesc = "** Invalid Code **";
+        } else {
+            tempchDesc = tempChartObj.chDesc;  
+        }
+	row1.find(".chartdesc").text(tempchDesc);
+
 	row1.find(".amt").text(jefrec.acctamt[0].amt);
 	return "<tr>"+row1.html()+"</tr>";
 };
@@ -2573,12 +2606,17 @@ function  insertformabovelastrow() {
     secondtolastrow = lastrow.prev();
     secondtolastrow.find('.amtinp').val(cramt);
     secondtolastrow.find('.acctinp').val(cract);
-    chartdesc = JS.chart[cract].chDesc;
-    if ( chartdesc == undefined ) {
+
+    chartdescobj = JS.chart[cract];
+    if ( chartdescobj == undefined ) {
         chartdesc = "** Invalid Code **";
     } else {
+        chartdesc = chartdescobj.chDesc;
+    }
+    if ( chartdesc != "** Invalid Code **" ) {
         secondtolastrow.find(".chartdesc").text(chartdesc);
     }
+
     lastrow.find('.cractinp').val("");
     lastrow.find('.cramtinp').val("");
     lastrow.find('.chartdesc').text("");

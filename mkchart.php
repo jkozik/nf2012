@@ -1,12 +1,109 @@
 <?php
 
-if ( getenv("YEAR")!="" ) {
+echo "mkchart: \n";
+echo "Make chart of accounts file for new year, based on current year's file.\n";
+echo "1. Verify the chart file for the current year exists.\n";
+echo "2. Verify the directory for the new year exists.  If not create it.\n";
+echo "3. Verify that the chart file for the new year does not exist.\n";
+echo "4. Make chart file for new year.\n";
+echo "The chart file has a field that indicates when an Account is new, or the account\n";
+echo "number changed.  This program keeps these fields up to date.  Used to be done manually.\n";
+
+/*
+** Following block of code handles command line options
+** Code Snipet and design idea for processing command line arguments came from
+** http://www.sitepoint.com/php-command-line-1-3/
+**  - usage: mkchart -y05 -f/home/public_html/nf/
+**  - usage: mkchart --YEAR=05 --F=/home/public_html/nf/
+**
+** Command lines are meant to over ride environment variables:
+** - F    -- root folder. Typically c:/nf/ or /home/nf/public_html/nf/
+** - YEAR -- current YEAR, formant YY.  mkchart creates a new chart file in
+**           a new directory $F/YY+1
+**
+*/
+
+
+
+
+// Include PEAR::Console_Getopt
+require_once 'Console/Getopt.php';
+
+
+// Define exit codes for errors
+define('NO_ARGS',10);
+define('INVALID_OPTION',11);
+
+// Reading the incoming arguments - same as $argv
+$args = Console_Getopt::readPHPArgv();
+
+// Make sure we got them (for non CLI binaries)
+if (PEAR::isError($args)) {
+fwrite(STDERR,$args->getMessage()."\n");
+exit(NO_ARGS);
+}
+// Short options
+// -yYY - Set year to YY.  Must be 2 digits; must be valid year
+// -fnfdir/ - $NFROOT to root directory where nf files are stored.
+//          - eg -f/home/nf/public_html/nf/
+//          - eg -fc:/nf/
+$short_opts = 'y::f::';
+// Long options
+$long_opts = array(
+'YEAR==',
+'F==',
+);
+
+
+
+// Convert the arguments to options - check for the first argument
+if ( realpath($_SERVER['argv'][0]) == __FILE__ ) {
+$options = Console_Getopt::getOpt($args,$short_opts,$long_opts);
+} else {
+$options = Console_Getopt::getOpt2($args,$short_opts,$long_opts);
+}
+// Check the options are valid
+if (PEAR::isError($options)) {
+fwrite(STDERR,$options->getMessage()."\n");
+echo "usage: mkchart -y05 -f/home/public_html/nf/\n";
+echo "usage: mkchart --YEAR=05 --F=/home/public_html/nf/\n";
+echo "invalid options.  exiting...\n";
+exit(INVALID_OPTION);
+}
+//print_r($options);
+$dashitems = $options[0];
+$clYEAR = "";
+$clF = "";
+if (sizeof($dashitems)>0) {
+    foreach ($dashitems as $flag) {
+        if ($flag[0] == 'y' || $flag[0] == '--YEAR') {
+            $clYEAR=$flag[1]; 
+        } else if ($flag[0] == 'f' || $flag[0] == '--F') {
+            $clF=$flag[1];
+        } else  {
+            echo "unrecognized command line flag: $flag[0]\n";
+            exit(12);
+        }
+     } // end of foreach
+} // end of if size of
+
+echo "clYEAR-$clYEAR, clF=$clF\n";
+
+/*
+** End of command line option parsing
+*/
+
+if ( $clYEAR!="" ) {
+    $year = $clYEAR;
+} else if ( getenv("YEAR")!="" ) {
     $year = getenv("YEAR");
 } else {
     $year = "05";
 }
 
-if ( getenv("F")=="nf" ) {
+if ( $clF != "" ) {
+    $NFROOT = $clF;
+} else if ( getenv("F")=="nf" ) {
     $NFROOT = "c:/nf/";
 } else if ( getenv("F")!="" ) {
     $NFROOT = getenv("F");
@@ -14,7 +111,9 @@ if ( getenv("F")=="nf" ) {
     // $NFROOT = "c:/nf/"; 
     $NFROOT = "/home/nf/public_html/nf/";
 }
-echo "year-$year NFROOT-$NFROOT\n";
+echo "Command lines variables:  clYEAR-$clYEAR, clF=$clF\n";
+echo "Using root=$NFROOT, year=$year\n";
+
 
 
 
@@ -22,15 +121,9 @@ $mm = '';
 //$year = '05';
 $months = array ("00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12");
 
-echo "mkchart: \n";
-echo "Make chart of accounts file for new year, based on current year's file.\n";
-echo "Using root=$NFROOT, year=$year\n";
-echo "1. Verify the chart file for the current year exists.\n";
-echo "2. Verify the directory for the new year exists.  If not create it.\n";
-echo "3. Verify that the chart file for the new year does not exist.\n";
-echo "4. Make chart file for new year.\n";
-echo "The chart file has a field that indicates when an Account is new, or the account\n";
-echo "number changed.  This program keeps these fields up to date.  Used to be done manually.\n";
+echo "usage: mkchart <no command line args>  use environment variables YEAR and F\n";
+echo "usage: mkchart -y05 -f/home/public_html/nf/\n";
+echo "usage: mkchart --YEAR=05 --F=/home/public_html/nf/\n";
 
 /*
 ** mkchart: Create chart of accounts file for new year
@@ -55,21 +148,24 @@ if ( !is_dir( $yeardir ) ) {
     echo "The YEAR environment variable set incorrectly?\n";
     echo "e.g. set YEAR=11  not set YEAR=\"11\"\n";
     echo "Exiting.\n";
-    exit;
+    echo "status=404,message=Directory $yeardir does not exist.\n";
+    exit(1);
 }
 
 /* Current chart file must exist */
 $chartfilename = $NFROOT.$year."/chart";
 if( file_exists( $chartfilename ) === FALSE ) {
     echo "$chartfilename does not exist.  Exiting.\n";
-    exit;
+    echo "status=404,message=Chart of accounts file $chartfilename does not exist.\n";
+    exit(2);
 }
 
 /* Try to open current year chart file */
 $chartfilelines = file( $chartfilename );
 if ( $chartfilelines == FALSE ) {
     echo "Unable to open $chartfilename. Exiting.\n";
-    exit;
+    echo "status=500,message=Chart of accounts file $chartfilename exists but unable to open.\n";
+    exit(3);
 }
 
 /* Create next year's $NFROOT folder.  E.g. $year-05, next year is 06 */
@@ -81,7 +177,8 @@ if ( !is_dir( $nextyeardir ) ) {
     $ret = mkdir($nextyeardir);
     if ($ret == FALSE) {
         echo "Unable to create directory.  Exiting.\n";
-        exit;
+        echo "status=500,message=Unable to create directory $nextyeardir\n";
+        exit(4);
     }
 }
 
@@ -89,7 +186,8 @@ if ( !is_dir( $nextyeardir ) ) {
 $nextyearchartfilename = $nextyeardir."/chart";
 if ( file_exists ($nextyearchartfilename) ) {
     echo "$yearpp chart already exists.  Exiting.\n";
-    exit;
+    echo "status=500,message=Chart file for $yearpp already exists.\n";
+    exit(5);
 }
 echo "Creating file: $nextyearchartfilename\n";
 
@@ -195,8 +293,12 @@ if ($ret !== FALSE) {
     echo "- record count-".count($nextyearchartfilelines)."\n";
     echo "- new accounts-$lyacnt\n";
     echo "- sub account tags-$sacnt\n";
+    echo "status=200,message=mkchart: created new file $nextyearchartfilename.\n";
+    exit(0);
 } else {
     echo "Unable to write chart\n";
+    echo "status=500,message=unable to write chart file\n";
+    exit(6);
 }
 
 exit;

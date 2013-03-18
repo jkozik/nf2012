@@ -1,43 +1,138 @@
 <?php
 
+echo "close: \n";
+echo "This script closes the current year by creating\n";
+echo "a new beginning balance file new00.\n";
+echo "Assuming closing year-\$year\n";
+echo "1. Import all JE files (00, 01, ..., 12)\n";
+echo "2. Create file nf/YY+1/new00\n";
+echo "3. The new00 file must be manually renamed 00\n";
+echo "Only write new00 file if the \$year+1 directory exists,\n";
+echo "and it contains a chart file\n";
+
+
+
+/*
+** Following block of code handles command line options
+** Code Snipet and design idea for processing command line arguments came from
+** http://www.sitepoint.com/php-command-line-1-3/
+**  - usage: close -y05 -f/home/public_html/nf/
+**  - usage: close --YEAR=05 --F=/home/public_html/nf/
+**
+** Command lines are meant to over ride environment variables:
+** - F    -- root folder. Typically c:/nf/ or /home/nf/public_html/nf/
+** - YEAR -- current YEAR, formant YY.  mkchart creates a new chart file in
+**           a new directory $F/YY+1
+**
+*/
+
+
+
+
+// Include PEAR::Console_Getopt
+require_once 'Console/Getopt.php';
+
+
+// Define exit codes for errors
+define('NO_ARGS',10);
+define('INVALID_OPTION',11);
+
+// Reading the incoming arguments - same as $argv
+$args = Console_Getopt::readPHPArgv();
+
+// Make sure we got them (for non CLI binaries)
+if (PEAR::isError($args)) {
+fwrite(STDERR,$args->getMessage()."\n");
+exit(NO_ARGS);
+}
+// Short options
+// -yYY - Set year to YY.  Must be 2 digits; must be valid year
+// -fnfdir/ - $NFROOT to root directory where nf files are stored.
+//          - eg -f/home/nf/public_html/nf/
+//          - eg -fc:/nf/
+$short_opts = 'y::f::';
+// Long options
+$long_opts = array(
+'YEAR==',
+'F==',
+);
+
+
+
+// Convert the arguments to options - check for the first argument
+if ( realpath($_SERVER['argv'][0]) == __FILE__ ) {
+$options = Console_Getopt::getOpt($args,$short_opts,$long_opts);
+} else {
+$options = Console_Getopt::getOpt2($args,$short_opts,$long_opts);
+}
+// Check the options are valid
+if (PEAR::isError($options)) {
+fwrite(STDERR,$options->getMessage()."\n");
+echo "usage: close -y05 -f/home/public_html/nf/\n";
+echo "usage: close --YEAR=05 --F=/home/public_html/nf/\n";
+echo "invalid options.  exiting...\n";
+exit(INVALID_OPTION);
+}
+//print_r($options);
+$dashitems = $options[0];
+$clYEAR = "";
+$clF = "";
+if (sizeof($dashitems)>0) {
+    foreach ($dashitems as $flag) {
+        if ($flag[0] == 'y' || $flag[0] == '--YEAR') {
+            $clYEAR=$flag[1]; 
+        } else if ($flag[0] == 'f' || $flag[0] == '--F') {
+            $clF=$flag[1];
+        } else  {
+            echo "unrecognized command line flag: $flag[0]\n";
+            exit(12);
+        }
+     } // end of foreach
+} // end of if size of
+
+echo "clYEAR-$clYEAR, clF=$clF\n";
+
+/*
+** End of command line option parsing
+*/
+
+
 /*
 ** Set key global variables:  $year and $NFROOT
 */
 
-if ( getenv("YEAR")!="" ) {
+
+if ( $clYEAR!="" ) {
+    $year = $clYEAR;
+} else if ( getenv("YEAR")!="" ) {
     $year = getenv("YEAR");
 } else {
     $year = "05";
 }
 
-if ( getenv("F")=="nf" ) {
+
+if ( $clF != "" ) {
+    $NFROOT = $clF;
+} else if ( getenv("F")=="nf" ) {
     $NFROOT = "c:/nf/";
 } else if ( getenv("F")!="" ) {
     $NFROOT = getenv("F");
 } else {
-    /* $NFROOT = "c:/nf/"; */
+    // $NFROOT = "c:/nf/";
     $NFROOT = "/home/nf/public_html/nf/";
 }
-echo "year-$year NFROOT-$NFROOT\n";
-
-
-
+echo "Command lines variables:  clYEAR-$clYEAR, clF=$clF\n";
+echo "Using root=$NFROOT, year=$year\n";
 
 
 $mm = '';
 //$year = '05';
 $months = array ("00", "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12");
 
-echo "close: \n";
-echo "This script closes the current year by creating\n";
-echo "a new beginning balance file new00.\n";
-echo "Assuming closing year-$year\n";
-echo "1. Import all JE files (00, 01, ..., 12)\n";
-echo "2. Create file nf/YY+1/new00\n";
-echo "3. The new00 file must be manually renamed 00\n";
-echo "Only write new00 file if the $year+1 directory exists,\n";
-echo "and it contains a chart file\n";
-echo "Using root=$NFROOT, year=$year\n";
+echo "usage: close <no command line args>  use environment variables YEAR and F\n";
+echo "usage: close -y05 -f/home/public_html/nf/\n";
+echo "usage: close --YEAR=05 --F=/home/public_html/nf/\n";
+
 
 /*
 ** Pregl: format working files to help with General Ledger style reporting.
@@ -86,10 +181,11 @@ if ( !is_dir( $yeardir ) ) {
     echo "The YEAR environment variable set incorrectly?\n";
     echo "e.g. set YEAR=11  not set YEAR=\"11\"\n";
     echo "Exiting.\n";
-    exit;
+    echo "status=404,message=Directory $yeardir does not exist.\n";
+    exit(1);
 }
 
-/* Verify that YY+1 directory exists */
+/* Calculate next year's directory,  YY+1 */
 if ($year == "99") {
     $yearpp = "00";
 } else {
@@ -97,11 +193,14 @@ if ($year == "99") {
 }
 echo "yearpp=$yearpp\n";
 $nextyeardir = $NFROOT.$yearpp;
+
+/* Verify that YY+1 directory exists */
 if ( !is_dir( $nextyeardir ) ) {
     echo "Directory $nextyeardir does not exisit.\n";
     echo "Need to run mkchart first\n";
     echo "Exiting.\n";
-    exit;
+    echo "status=500,message=Directory $nextyeardir does not exisit. Run Mkchart.\n";
+    exit(2);
 }
 
 
@@ -111,7 +210,8 @@ if ( !file_exists ($nextyearchartfilename) ) {
     echo "$nextyearchartfilename does not exist.\n";
     echo "Need to run mkchart first\n";
     echo "Exiting.\n";
-    exit;
+    echo "status=500,message=$nextyearchartfilename does not exist. Run Mkchart.\n";
+    exit(3);
 }
 
 
@@ -133,7 +233,8 @@ if ( !file_exists ($nextyearchartfilename) ) {
     foreach( $months as $m ) {
         $jefileFileName = $NFROOT.$year."/".$m;
         if ( file_exists( $jefileFileName ) ) {
-            $jefileLines = file( $jefileFileName );
+            $jefileLines = file( $jefileFileName, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
+            if ( $jefileLines == FALSE ) continue;
             if ( $m != "00" ) { $JSnnyyjson .= ","; };
             $JSnnyyjson .= "\"".$m."\":[\n";
             $JSnnyyjson .= jefiletojson( $jefileLines );
@@ -215,12 +316,15 @@ $new00filelines[$new00idx++] = sprintf("0000,%s,%0.2f,Balance Forward".PHP_EOL, 
 //var_dump($new00filelines);
 $ret = file_put_contents($new00filename,$new00filelines);
 if ($ret==FALSE) {
-    echo "Unable to write new00.  Exiting.\n";
-    exit;
+    echo "Unable to write new00.\n  Exiting.\n";
+    echo "status=500,message=Unable to write new00.\n";
+    exit(4);
 } else {
     echo "new00 successfully written.\n";
     echo " count-".count($new00filelines)."\n";
     echo " sum-".sprintf("%0.2f",$totalnew00)."\n";
+    echo "status=200,message=close: created $new00filename.\n";
+    exit(0);
 }
 exit;
 
