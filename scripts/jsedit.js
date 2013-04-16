@@ -171,7 +171,7 @@ JS.logHtml += "</pre></td></tr></tbody>";
         //"dataType":"text", 
         "dataType":"json", 
         timeout: (2 * 1000),
-        success: function(response) {
+        success: function(response,textStatus, jqXHR) {
             $.unblockUI();
             /*
             ** Put response -> JS.chart
@@ -179,14 +179,16 @@ JS.logHtml += "</pre></td></tr></tbody>";
             JS.chart = response;
 
             /* Logging */
-            $("#contentJournal").append("<br>chart... received "+response.length+ " bytes");
+            $("#contentJournal").append("<br>chart... received "+jqXHR.responseText.length+ " bytes");
             JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-            JS.logHtml += "<br>chart... received "+response.length+ " bytes";
+            JS.logHtml += "<br>chart... received "+jqXHR.responseText.length+ " bytes";
 
+
+            chartEntries = (jqXHR.responseText.split(/\r?\n|\r/).length-3).toString();
 
             /* Logging */
-            $("#contentJournal").append("<br>chart... parsed into "+JS.chart.length+ " enteries in JS.chart[]");
-            JS.logHtml += "<br>chart... parsed into "+JS.chart.length+ " enteries in JS.chart[]";
+            $("#contentJournal").append("<br>chart... parsed into "+chartEntries+ " enteries in JS.chart[]");
+            JS.logHtml += "<br>chart... parsed into "+chartEntries+ " enteries in JS.chart[]";
             end = new Date().getTime();
             diff = end - start;
             $("#contentJournal").append("<br>chart... time "+ diff);
@@ -1262,7 +1264,7 @@ $('#menuClose').click(function() {
     }
 
     if (typeof dialogCloseSubmit == "undefined") {
-        dynamicallyLoadJSFile('scripts/close.js?q=123', function(){
+        dynamicallyLoadJSFile('scripts/close.js?q=1234', function(){
             console.log('dynamicallyLoadJSFile: Load close.js was performed.');
             dialogCloseSubmit();
         });

@@ -282,9 +282,11 @@ var GLnewheads = function() {
 ** If not, we want to tag with an error message
 */
 var CHlookup = function(acct) {
-    var chartdesc = JS.chart[acct].chDesc;
-    if (chartdesc === undefined) {
+    var chartdescobj = JS.chart[acct];
+    if (chartdescobj === undefined) {
         chartdesc = "** Invalid Code **";
+    } else {
+        chartdesc = chartdescobj.chDesc;
     }
     return chartdesc;
 }

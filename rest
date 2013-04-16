@@ -237,7 +237,8 @@ if ($nav == "diffnew00") {
     };
 
     $body="";
-    $body .= "<pre>".`diff $nextyeardir/new00 $nextyeardir/00 ; echo retval=$?; echo`."</pre>";
+    // diff.php - script that creates a pretty html style diff. Works across PC and Linux
+    $body .= "<pre>".`php diff.php $nextyeardir/new00 $nextyeardir/00 ; echo retval=$?; echo`."</pre>";
     $diffretcode = preg_replace( '/^.*retval=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
     if ($count == 0 ) {
         $status = 200; 
@@ -284,27 +285,25 @@ if ($nav == "copynew00") {
 
     /* 00 -- file exist?  If not, that's ok.  Otherwise, let's make a backup copy.  For now, it is okay for this to silently fail */
     if (!file_exists($nextyeardir."/00")) {
-        `cp $nextyeardir/new00 $nextyeardir/00`;
+        //`cp $nextyeardir/new00 $nextyeardir/00`;
+        //copy( $nextyeardir."/new00", $nextyeardir."/00");
     };
 
     $body="";
-    $body .= "<pre>".`cp $nextyeardir/new00 $nextyeardir/00 ; echo retval=$?; echo`."</pre>";
-    $copyretcode = preg_replace( '/^.*retval=([^"\r\n]*).*$/si', '${1}', $body, 1, $count );
-    if ($count == 0 ) {
-        $status = 200; 
-        $message = "copy new00 00 runs successfully.";
-    } else if ( $copyretcode == 0 ) {
-        $status = 200;
-        $message = "cp new00 00 successful.";
-    } else if ( $copyretcode == 1 ) {
+    $ret = copy( $nextyeardir."/new00", $nextyeardir."/00");
+    if ($ret == FALSE) {
+        $message = "copy( $nextyeardir/new00, $nextyeardir/00) failed. \nPermission or ownership issue on server";
         $status = 500;
-        $message = "cp new00 00 copy failed.";
-    } else {
-        $status = 500;
-        $message = "unrecognized copy return code.";
+        $body = "";
+        $body .= "status=$status, message='$message'\n";
+        _sendResponse($status,$body,$message);
+        exit;
+
     }
-    $body .= "count=$count, status=$status, message='$message'\n";
-    $body .= "\n";
+    $message = "copy( $nextyeardir/new00, $nextyeardir/00) successful.";
+    $status = 200;
+    $body = "";
+    $body .= "status=$status, message='$message'\n";
     _sendResponse($status,$body,$message);
 }
 

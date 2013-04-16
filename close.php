@@ -36,6 +36,7 @@ require_once 'Console/Getopt.php';
 // Define exit codes for errors
 define('NO_ARGS',10);
 define('INVALID_OPTION',11);
+error_reporting(E_ALL & ~(E_STRICT | E_NOTICE));
 
 // Reading the incoming arguments - same as $argv
 $args = Console_Getopt::readPHPArgv();
@@ -117,6 +118,10 @@ if ( $clF != "" ) {
     $NFROOT = "c:/nf/";
 } else if ( getenv("F")!="" ) {
     $NFROOT = getenv("F");
+} else if ( is_dir( "c:/nf/" ) ) {
+    $NFROOT = "c:/nf/";;
+} else if ( is_dir( "/home/nf/public_html/nf/" ) ) {
+    $NFROOT = "/home/nf/public_html/nf/";
 } else {
     // $NFROOT = "c:/nf/";
     $NFROOT = "/home/nf/public_html/nf/";
@@ -314,9 +319,10 @@ $new00filelines[$new00idx++] = sprintf("0000,%s,%0.2f,Balance Forward".PHP_EOL, 
 
 
 //var_dump($new00filelines);
-$ret = file_put_contents($new00filename,$new00filelines);
-if ($ret==FALSE) {
-    echo "Unable to write new00.\n  Exiting.\n";
+$ret = @file_put_contents($new00filename,$new00filelines);
+if ($ret===FALSE) {
+    echo "Unable to write new00. File exists?";
+    echo " Wrong permissions or file exists but owned by someone else?\n  Exiting.\n";
     echo "status=500,message=Unable to write new00.\n";
     exit(4);
 } else {

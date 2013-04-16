@@ -33,6 +33,7 @@ require_once 'Console/Getopt.php';
 // Define exit codes for errors
 define('NO_ARGS',10);
 define('INVALID_OPTION',11);
+error_reporting(E_ALL & ~(E_STRICT | E_NOTICE));
 
 // Reading the incoming arguments - same as $argv
 $args = Console_Getopt::readPHPArgv();
@@ -107,6 +108,10 @@ if ( $clF != "" ) {
     $NFROOT = "c:/nf/";
 } else if ( getenv("F")!="" ) {
     $NFROOT = getenv("F");
+} else if ( is_dir( "c:/nf/" ) ) {
+    $NFROOT = "c:/nf/";;
+} else if ( is_dir( "/home/nf/public_html/nf/" ) ) {
+    $NFROOT = "/home/nf/public_html/nf/";
 } else {
     // $NFROOT = "c:/nf/"; 
     $NFROOT = "/home/nf/public_html/nf/";

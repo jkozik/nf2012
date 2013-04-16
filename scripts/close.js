@@ -65,23 +65,13 @@ function dialogCloseSubmit() {
 <div id=copynew00></div>";
     $("#contentReport").html($closeHtml);
 
-    $( "#buttonMkchart" ).button().click( function (event) {
-        console.log("menuClose: Mkchart button clicked\n");
-        //$("#contentReport").append("<br><div id=mkchart></div>");
-        runmkchart();
-    }).css("padding", ".1em .1em");
-    $( "#buttonClose" ).button().click( function (event) {
-        console.log("menuClose: Close button clicked\n");
-        runclose();
-    }).css("margin-top", "10px");
-    $( "#buttonDiffnew00" ).button().click( function (event) {
-        console.log("menuDiffnew00: Diffnew00 button clicked\n");
-        rundiffnew00();
-    }).css("margin-top", "10px");
-    $( "#buttonCopynew00" ).button().click( function (event) {
-        console.log("menuCopynew00: Copynew00 button clicked\n");
-        runcopynew00();
-    }).css("margin-top", "10px");
+    $( "#buttonMkchart,#buttonClose,#buttonDiffnew00,#buttonCopynew00" ).button().click( function (event) {
+        buttonID = this.id;
+        messageID = this.nextSibling.id;
+        messageObj = $("#"+messageID);
+        console.log("buttonID-"+buttonID+" messageID-"+messageID+"\n");
+        runCloseCommands(buttonID, messageID, messageObj);
+    });
     $("#contentReport").show();
     $("#menuESC").show();
 
@@ -89,229 +79,98 @@ function dialogCloseSubmit() {
 };
 
 
+    JS.arCloseCommands = ["mkchart", "close", "diffnew00", "copynew00"];
 
-/* Report->Close run mkchart */
-function runmkchart() {
-    mkchartRestGET = JS.jefileRestURI + JS.year + '/mkchart';
+/* Report->Close run close remote execution scripts:
+** - mkchart -- runs mkchart.php script on the server to create
+**              a chart of accounts file for the next year,
+**              creating ../nf/YY+1/chart
+** - close   -- runs the close.php sricpt to close the current
+**              years finances and create a new beginning balance
+**              file, named new00, for next year's finances directory
+**              creating ../nf/YY+1/new00
+** - diffnew00 -- runs the diff.php script.  It compares next years
+**              new beginning balance file with the existing file
+**              returning the results of diff.php ../nf/YY+1/new00 and ../nf/YY+1/00
+** - copynew00 -- runs a php copy function 
+**              copying ../nf/YY+1/new00 to ../nf/YY+1/00
+**
+** This function is an event attached to the web page off of the close menu.
+** It checks to see which button is pressed and remotely runs one of the above
+** scripts on the server.
+*/
+function runCloseCommands(buttonID, messageID, messageObj) {
 
+    /* Validate messageID */
+    if ($.inArray(messageID, JS.arCloseCommands)== -1 ) {
+        console.log("runCloseCommands:  unrecognized messageID-"+messageID+"\n");
+        return;
+    } else { 
+        console.log("runCloseCommands: "+messageID+" button clicked\n");
+        CloseCommand = messageID;
+    }
+
+    /* For rest GET URL */
+    CloseCommandRestGet = JS.jefileRestURI + JS.year + '/';
+    CloseCommandRestGet += CloseCommand;
+
+    /* Logging */
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Remotely executing mkchart<br>GET "+mkchartRestGET;
+    JS.logHtml += "<br>Remotely executing "+CloseCommand+"<br>GET "+CloseCommandRestGet;
     start = new Date().getTime();
-    $.blockUI({ message: '<h4><img src="images/busy.gif" /> running mkchart ...  </h4>' });
+    $.blockUI({ message: '<h4><img src="images/busy.gif" /> running '+CloseCommand+' ...  </h4>' });
 
-    $.ajax({"url":mkchartRestGET,
+    $.ajax({"url":CloseCommandRestGet,
         "type":"GET",
-        "dataType":"text",
-        success: function(data) {
-            JS.logHtml += "<br>... run successful.";
+        "dataType":"text"})
+        .always( function(arg1, textStatus, arg3 ) {
+        // on fail: always( function(jqXHR, textStatus, err ) { and textStatus != "success"
+        // on done: always( function(err, textStatus, jqXHR ) { and textStatus == "success"
+            console.log("First Always function. textStatus="+textStatus+"\n");
+        }) /* end always (top) */
+        .done( function(data, textStatus, jqXHR) {
+            /* Close Command runs successfully.  Returns following message. */
             message = /message=[^"\r\n]*/.exec(data); 
+            messagenkw = message[0].replace(/^message=/, '');;
+            messageObj.append("<pre>"+messagenkw+"</pre>");
+
+            if (CloseCommand == "diffnew00") {
+                datanoretval = data.replace(/retval=.*$/m, '');
+                datanoretval = datanoretval.replace(/count=.*$/m, '').trim();
+                $("#diffnew00").html("<pre>"+datanoretval+"</pre>");
+            }
+
+            /* Logging */
+            JS.logHtml += "<br>... run successful.";
             JS.logHtml += "<br>"+message;
             JS.logHtml += "<br>"+data;
-            $("#statusfield").html("mkchart run");
+            $("#statusfield").html(CloseCommand+" Done");
 
-            message = message[0].replace(/^message=/, '');;
-            $("#mkchart").html("<pre>"+message+"</pre>");
 
-            
+        }) /* end done: */
+        .fail( function (jqXHR, textStatus, err) {
+            /* Close Command returned an error */
+            message = /message=[^"\r\n]*/.exec(jqXHR.responseText); 
+            messagenkw = message[0].replace(/^message=/, '');;
+            messageObj.append("<pre>"+messagenkw+"</pre>");
+    
+            /* Logging */
+            console.log(CloseCommand+" run returned error", jqXHR.status,jqXHR.statusText);
+            $("#statusfield").html(CloseCommand+" run Failed.");
+            JS.logHtml += "<br>"+CloseCommand+" run returned error "+jqXHR.status+" "+jqXHR.statusText;
+            JS.logHtml += "<br>"+message;
+            JS.logHtml += "<br>"+jqXHR.responseText;
+
+        }) /* end fail */
+        .always( function() { 
+            /* Logging */
             end = new Date().getTime();
-            diff = end - start;
-              end = new Date().getTime();
             diff = end - start;
             JS.logHtml += "<br>... time "+ diff;
             JS.logHtml += "</pre></td></tr></tbody>";
-
             $.unblockUI();
-            $("#statusfield").html("Mkchart Done");
-            $("#menuESC").show();
-        }, /* end success: */
-        error: function (req, stat, err) {
-
-            console.log("mkchart run returned error", req.status,req.statusText);
-            $("#statusfield").html("mkchart run Failed.");
-            //message = req.responseText.replace('/^.*message=([^"\r\n]*).*$/mi', $1);
-            message = /message=[^"\r\n]*/.exec(req.responseText); 
-            JS.logHtml += "<br>mkchart run returned error "+req.status+" "+req.statusText;
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+req.responseText;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            message = message[0].replace(/^message=/, '');;
-            $("#mkchart").append("<pre>"+message+"</pre>");
-            //$("#mkchart").append("<pre>"+req.responseText+"</pre>");
-            $.unblockUI();
-
-        } /* end error: */
-    });
+        }); /* End always */
 
 
-} // end run mkchart
+} // end runCloseCommand
 
-/* Report->Close run close */
-function runclose() {
-    closeRestGET = JS.jefileRestURI + JS.year + '/close';
-
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Remotely executing close<br>GET "+closeRestGET;
-    start = new Date().getTime();
-    $.blockUI({ message: '<h4><img src="images/busy.gif" /> running close ...  </h4>' });
-
-    $.ajax({"url":closeRestGET,
-        "type":"GET",
-        "dataType":"text",
-        success: function(data) {
-            JS.logHtml += "<br>... run successful.";
-            message = /message=[^"\r\n]*/.exec(data); 
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+data;
-            $("#statusfield").html("close run");
-
-            message = message[0].replace(/^message=/, '');;
-            $("#close").html("<pre>"+message+"</pre>");
-
-            
-            end = new Date().getTime();
-            diff = end - start;
-              end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            $.unblockUI();
-            $("#statusfield").html("Close Done");
-            $("#menuESC").show();
-        }, /* end success: */
-        error: function (req, stat, err) {
-
-            console.log("close run returned error", req.status,req.statusText);
-            $("#statusfield").html("close run Failed.");
-            //message = req.responseText.replace('/^.*message=([^"\r\n]*).*$/mi', $1);
-            message = /message=[^"\r\n]*/.exec(req.responseText); 
-            JS.logHtml += "<br>close run returned error "+req.status+" "+req.statusText;
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+req.responseText;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            message = message[0].replace(/^message=/, '');;
-            $("#close").append("<pre>"+message+"</pre>");
-            //$("#close").append("<pre>"+req.responseText+"</pre>");
-            $.unblockUI();
-
-        } /* end error: */
-    });
-
-
-} // end run close
-
-/* Report->Close run Diffnew00 */
-function rundiffnew00() {
-    diffnew00RestGET = JS.jefileRestURI + JS.year + '/diffnew00';
-
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Remotely executing diffnew00<br>GET "+diffnew00RestGET;
-    start = new Date().getTime();
-    $.blockUI({ message: '<h4><img src="images/busy.gif" /> running diffnew00 ...  </h4>' });
-
-    $.ajax({"url":diffnew00RestGET,
-        "type":"GET",
-        "dataType":"text",
-        success: function(data, textStatus, xhr) {
-            JS.logHtml += "<br>... run successful.";
-            message = /message=[^"\r\n]*/.exec(data); 
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+data;
-            $("#statusfield").html("diffnew00 run");
-
-            message = message[0].replace(/^message=/, '');;
-            datanoretval = data.replace(/retval=.*$/m, '');
-            datanoretval = datanoretval.replace(/count=.*$/m, '').trim();
-            $("#diffnew00").html("<pre>"+datanoretval+"</pre>");
-
-            
-            end = new Date().getTime();
-            diff = end - start;
-              end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            $.unblockUI();
-            $("#statusfield").html("diffnew00 Done");
-            $("#menuESC").show();
-        }, /* end success: */
-        error: function (req, stat, err) {
-
-            console.log("diffnew00 run returned error", req.status,req.statusText);
-            $("#statusfield").html("diffnew00 run Failed.");
-            //message = req.responseText.replace('/^.*message=([^"\r\n]*).*$/mi', $1);
-            message = /message=[^"\r\n]*/.exec(req.responseText); 
-            JS.logHtml += "<br>diffnew00 run returned error "+req.status+" "+req.statusText;
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+req.responseText;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            message = message[0].replace(/^message=/, '');;
-            $("#diffnew00").append("<pre>"+message+"</pre>");
-            //$("#diffnew00").append("<pre>"+req.responseText+"</pre>");
-            $.unblockUI();
-
-        } /* end error: */
-    });
-
-
-} // end run diffnew00
-
-/* Report->Close run Copynew00 */
-function runcopynew00() {
-    copynew00RestGET = JS.jefileRestURI + JS.year + '/copynew00';
-
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Remotely executing copynew00<br>GET "+copynew00RestGET;
-    start = new Date().getTime();
-    $.blockUI({ message: '<h4><img src="images/busy.gif" /> running copynew00 ...  </h4>' });
-
-    $.ajax({"url":copynew00RestGET,
-        "type":"GET",
-        "dataType":"text",
-        success: function(data, textStatus, xhr) {
-            JS.logHtml += "<br>... run successful.";
-            message = /message=[^"\r\n]*/.exec(data); 
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+data;
-            $("#statusfield").html("copynew00 run");
-
-            message = message[0].replace(/^message=/, '');;
-            $("#copynew00").html("<pre>"+message+"</pre>");
-
-            
-            end = new Date().getTime();
-            diff = end - start;
-              end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            $.unblockUI();
-            $("#statusfield").html("copynew00 Done");
-            $("#menuESC").show();
-        }, /* end success: */
-        error: function (req, stat, err) {
-
-            console.log("copynew00 run returned error", req.status,req.statusText);
-            $("#statusfield").html("copynew00 run Failed.");
-            //message = req.responseText.replace('/^.*message=([^"\r\n]*).*$/mi', $1);
-            message = /message=[^"\r\n]*/.exec(req.responseText); 
-            JS.logHtml += "<br>copynew00 run returned error "+req.status+" "+req.statusText;
-            JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+req.responseText;
-            JS.logHtml += "</pre></td></tr></tbody>";
-
-            message = message[0].replace(/^message=/, '');;
-            $("#copynew00").append("<pre>"+message+"</pre>");
-            //$("#copynew00").append("<pre>"+req.responseText+"</pre>");
-            $.unblockUI();
-
-        } /* end error: */
-    });
-
-
-} // end run copynew00

@@ -167,7 +167,10 @@ body   {
     line-height: 1.0;
 }
 
-
+#buttonMkchart, #buttonCopynew00, #buttonDiffnew00, #buttonClose {
+    padding: .1em .1em;
+    margin-top: 10px;
+}
 
 /* Homepage
 -----------------------------------------------------------------------------*/
