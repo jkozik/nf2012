@@ -113,7 +113,11 @@ $.get('/jetmpl.html', function(data) {
     console.log("jetmpl.html file loaded.  Should setup on JS.logHtml");
 });
 *******************/
-
+//$.curCSS = function (element, attrib, val) {
+    //$(element).css(attrib, val);
+//};
+//if ( $.attrFn ) { $.attrFn.text = true; } 
+//$.attrFn = $.attrFn || {};
 /*
 ** Load /jetmpl.html
 ** -- templates for journal entry display and edit forms
@@ -207,6 +211,9 @@ JS.logHtml += "</pre></td></tr></tbody>";
     });
     $("#statusfield").html("chart...");
 
+
+
+
 /* Menu Events */
 
 
@@ -249,7 +256,6 @@ $('#menuSaveAs').click(function(){
             close: function(ev, ui) { $(this).remove(); }
 		
         }).submit(function(){ dialogSaveAsSubmit(); });
-
 });
 
 
@@ -381,7 +387,7 @@ function dialogNewSubmit() {
 
 $('#menuLoad').click(function(){
     console.log("menuLoad click function called");
-    console.log("%o",this);
+    //console.log("%o",this);
     $("#foot").text("");
     if (JS.jefileOpen === true && JS.jefileChanged === true) {
         console.log("menuLoad:  file already opened and has changed, need to prompt to save");
@@ -1447,7 +1453,8 @@ return rep;
 /* Mouse Events */
 
     /* Hover  - hightlight current journalEntry*/
-    $("tbody.DISABLEjournalEntry").live('mouseover mouseout', function(evt) {
+    //$("tbody.DISABLEjournalEntry").live('mouseover mouseout', function(evt) {
+    $(document).on('mouseover mouseout', "tbody.DISABLEjournalEntry", function(evt) {
       if (evt.type == 'mouseover') {
         $(this).addClass("displayTableEntryhighlight");
       } else {
@@ -1456,7 +1463,8 @@ return rep;
     });
 
    /* Click - select a journalEntry  or reportEntry in the displayTable */
-    $("tbody.displayTableEntry").live('click', function() {
+    //$("tbody.displayTableEntry").live('click', function() {
+    $(document).on('click',"tbody.displayTableEntry", function() {
         var oldidx = null;
         var newidx = null;
         var rows = null;
@@ -1495,7 +1503,8 @@ return rep;
 
 
     /* experimental.  doesnt do anything */
-    $('#journal input.ddinp').live('keyup keydown blur', function(evt) {
+    //$('#journal input.ddinp').live('keyup keydown blur', function(evt) {
+    $(document).on('keyup keydown blur','#journal input.ddinp', function(evt) {
         key = evt.which;
         classinp=$(this).attr('class');
         val=$(this).val();
@@ -1506,7 +1515,8 @@ return rep;
     );
 
 
-    $('#journal input').live('keydown', function(evt) {
+    //$('#journal input').live('keydown', function(evt) {
+    $(document).on('keydown','#journal input', function(evt) {
         key = evt.which;
         classinp=$(this).attr('class');
         val=$(this).val();
@@ -1650,7 +1660,8 @@ return rep;
         } // for
     });
 
-    $('#journal input').live('keyup', function(evt) {
+    //$('#journal input').live('keyup', function(evt) {
+    $(document).on('keyup','#journal input', function(evt) {
 
         //console.log("input keyup",evt,evt.keyCode,evt.srcElement,evt.target.className,$(evt.target).attr('maxlength'),$(evt.target).attr('class'),$(evt.which),evt.type,$(evt.target).attr('value'));
         //console.log($(this).val(), $(this).attr('maxlength'), $(this).attr('class'));
@@ -1984,7 +1995,8 @@ return rep;
     ** - display Chart Menu when entering acctinp/cractinp field
     ** - displaying a prompt in the footer
     */
-    $('#journal input').live('focus', function(evt) {
+    //$('#journal input').live('focus', function(evt) {
+    $(document).on('focus','#journal input', function(evt) {
         classinp=$(this).attr('class');
         console.log("focus", classinp );
         $(this).removeClass("idleField").addClass("focusField");
@@ -2019,7 +2031,8 @@ return rep;
     ** - clearing the prompt in the footer
     ** - if blur from ddinp, acctinp, amtinp, cract, cramt, block blur if fields not valid.
     */
-    $('#journal input').live('blur', function(evt) {
+    //$('#journal input').live('blur', function(evt) {
+    $(document).on('blur','#journal input', function(evt) {
         classinp=$(this).attr('class');
         console.log("blur", classinp );
         val=$(this).val();
@@ -2809,8 +2822,8 @@ function isvalidAmt ( val ) {
 
 $("body").attr("tabindex",-1).focus();
 //$("[id^=dialog]").not("[id$=Error]")
-$("[id^=dialog].ui-dialog-content")
-    .live( "dialogclose", function(event, ui) {
+//$("[id^=dialog].ui-dialog-content") .live( "dialogclose", function(event, ui) {
+$(document).on("dialogclose","[id^=dialog].ui-dialog-content", function(event, ui) {
         console.log("dialogbeforeclose");
         curjournalEntry = $("#journal .displayTableEntry").eq(JS.curidx);
         curjournalEntry.attr("tabindex",-1).focus();
