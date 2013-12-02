@@ -28,81 +28,78 @@ function dialogAarptSubmit() {
 
     jefileRestGET = JS.jefileRestURI + JS.year;
 
+    /* Logging Report->AArpt */
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Generating Aarpt Report for year-"+JS.year+"<br>GET "+jefileRestGET;
-    start = new Date().getTime();
+    JS.logHtml += "<br>Generating Aarpt Report for year-"+JS.year;
+    JS.logHtml += "</pre></td></tr></tbody>";
+
+
     $.blockUI({ message: '<h4><img src="images/busy.gif" /> Loading ...  </h4>' });
 
-    $.ajax({"url":jefileRestGET,
-        "type":"GET",
-        "dataType":"json", 
-        success: function(data) {
-            JS.logHtml += "<br>... received "+data.length+" bytes.";
-            JS.nfyy = data;
 
-            $("#statusfield").html("Aarpt Loaded");
-            JS.logHtml += "<br>... sorting data";
-            /*
-            ** Input: JS.nfyy["01" - "12"]
-            ** Output: JS.nfyy["00.pgl" - "12.pgl"]
-            */
-            console.log("about to call transformMMtoPGL()");
-            transformMMtoPGL();
+    $.ajax({
+      url: jefileRestGET,
+      type: "GET",
+      dataType: "json"
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        JS.logHtml += "<br>... received "+jqXHR.responseText.length+" bytes.";
+        JS.nfyy = response;
 
-            /* Log XX.pgl record counts */
-            MMcnt = "<br>... MM / Count";
-            $.each(JS.nfyy, function (key,value) {
-                if(key.length==2){
-                    MMcnt += "<br>    "+key+" / "+value.length;
-                }
-            });
-            JS.logHtml += MMcnt;
+        $("#statusfield").html("Aarpt Loaded");
+        JS.logHtml += "<br>... sorting data";
+        /*
+        ** Input: JS.nfyy["01" - "12"]
+        ** Output: JS.nfyy["00.pgl" - "12.pgl"]
+        */
+        console.log("about to call transformMMtoPGL()");
+        transformMMtoPGL();
 
-            /*
-            ** Input: JS.nfyy["00.pgl" - "12.pgl"]
-            ** Output: JS.nfyy["00to12.sgl"]
-            ** - sorted by acct, mmdd
-            */
-            sortPGLtoSGL();
+        /* Log XX.pgl record counts */
+        MMcnt = "<br>... MM / Count";
+        $.each(JS.nfyy, function (key,value) {
+            if(key.length==2){
+                MMcnt += "<br>    "+key+" / "+value.length;
+            }
+        });
+        JS.logHtml += MMcnt;
 
-            $("#statusfield").html("Aarpt Generating");
-            JS.logHtml += "<br>... generating report";
-            rep = AarptReportHtml();
-            /* rep = AnaldtlReportHtml("304"); */
+        /*
+        ** Input: JS.nfyy["00.pgl" - "12.pgl"]
+        ** Output: JS.nfyy["00to12.sgl"]
+        ** - sorted by acct, mmdd
+        */
+        sortPGLtoSGL();
 
+        $("#statusfield").html("Aarpt Generating");
+        JS.logHtml += "<br>... generating report";
+        rep = AarptReportHtml();
+        /* rep = AnaldtlReportHtml("304"); */
 
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
+        $("#contentJournal").hide();
+        $("#contentReport").html(""+rep+"");
+        JS.report.cnt = $("#report tbody").length;
+        JS.report.curidx = JS.report.cnt-1;
+        $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
+        /* All TOTAL lines are bold */
+        $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
 
-            $("#contentJournal").hide();
-            $("#contentReport").html(""+rep+"");
-            JS.report.cnt = $("#report tbody").length;
-            JS.report.curidx = JS.report.cnt-1;
-            $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
-            /* All TOTAL lines are bold */
-            $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
+        $("#contentReport").show();
+        $('html, body').animate({ scrollTop: $(document).height()}, 750);
 
-            $("#contentReport").show();
-            $('html, body').animate({ scrollTop: $(document).height()}, 750); 
+        $.unblockUI();
+        $("#statusfield").html("Aarpt Done");
+        $("#menuESC").show();
+ 
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        console.log("aarpt load failed. ", jqXHR.status, jqXHR.statusText);
+        JS.logHtml += "<br>... aaprt load failed. "
+        $.unblockUI();
+        $("#statusfield").html("Aarpt Load Failed.");
+      });
 
-            $.unblockUI();
-            $("#statusfield").html("Aarpt Done");
-            $("#menuESC").show();
-        }, /* end success: */
-
-        error: function (req, stat, err) {
-            console.log("analdtl load failed", req.status,req.statusText);
-            JS.logHtml += "<br>analdtl load failed "+req.status+" "+req.statusText+" "+err;
-            JS.logHtml += "<br>Aarpt-"+JS.year+"/?? Load failed.";
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $.unblockUI();
-            $("#statusfield").html("Aarpt Load Failed.");
-        } /* end error: */
-    });
-
-
+    JS.logHtml += "<br>... aaprt loading";
     $("#statusfield").html("Aarpt...");
 
 };

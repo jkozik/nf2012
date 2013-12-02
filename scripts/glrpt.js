@@ -28,79 +28,84 @@ function dialogGlrptSubmit() {
 
     jefileRestGET = JS.jefileRestURI + JS.year;
 
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Generating Glrpt Report for year-"+JS.year+"<br>GET "+jefileRestGET;
-    start = new Date().getTime();
     $.blockUI({ message: '<h4><img src="images/busy.gif" /> Loading ...  </h4>' });
 
-    $.ajax({"url":jefileRestGET,
-        "type":"GET",
-        "dataType":"json", 
-        success: function(data) {
-            JS.logHtml += "<br>... received "+data.length+" bytes.";
-            JS.nfyy = data;
-
-            $("#statusfield").html("Glrpt Loaded");
-            JS.logHtml += "<br>... sorting data";
-            /*
-            ** Input: JS.nfyy["01" - "12"]
-            ** Output: JS.nfyy["00.pgl" - "12.pgl"]
-            */
-            console.log("about to call transformMMtoPGL()");
-            transformMMtoPGL();
-
-            /* Log XX.pgl record counts */
-            MMcnt = "<br>... MM / Count";
-            $.each(JS.nfyy, function (key,value) {
-                if(key.length==2){
-                    MMcnt += "<br>    "+key+" / "+value.length;
-                }
-            });
-            JS.logHtml += MMcnt;
-
-            /*
-            ** Input: JS.nfyy["00.pgl" - "12.pgl"]
-            ** Output: JS.nfyy["00to12.sgl"]
-            ** - sorted by acct, mmdd
-            */
-            sortPGLtoSGL();
-
-            $("#statusfield").html("Glrpt Generating");
-            JS.logHtml += "<br>... generating report";
-            rep = GlrptReportHtml();
-            /* rep = AnaldtlReportHtml("304"); */
+    /* Logging Report->Glrpt */
+    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+    JS.logHtml += "<br>Generating Glrpt Report for year-"+JS.year;
+    JS.logHtml += "</pre></td></tr></tbody>";
 
 
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
+    $.ajax({
+      url: jefileRestGET,
+      type: "GET",
+      dataType: "json"
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        JS.logHtml += "<br>... received "+jqXHR.responseText.length+" bytes.";
+        JS.nfyy = response;
 
-            $("#contentJournal").hide();
-            $("#contentReport").html(""+rep+"");
-            JS.report.cnt = $("#report tbody").length;
-            JS.report.curidx = JS.report.cnt-1;
-            $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
-            /* All TOTAL lines are bold */
-            $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
+        $("#statusfield").html("Glrpt Loaded");
+        JS.logHtml += "<br>... sorting data";
+        /*
+        ** Input: JS.nfyy["01" - "12"]
+        ** Output: JS.nfyy["00.pgl" - "12.pgl"]
+        */
+        console.log("about to call transformMMtoPGL()");
+        transformMMtoPGL();
 
-            $("#contentReport").show();
-            $('html, body').animate({ scrollTop: $(document).height()}, 750); 
+        /* Log XX.pgl record counts */
+        MMcnt = "<br>... MM / Count";
+        $.each(JS.nfyy, function (key,value) {
+            if(key.length==2){
+                MMcnt += "<br>    "+key+" / "+value.length;
+            }
+        });
+        JS.logHtml += MMcnt;
 
-            $.unblockUI();
-            $("#statusfield").html("Glrpt Done");
-            $("#menuESC").show();
-        }, /* end success: */
+        /*
+        ** Input: JS.nfyy["00.pgl" - "12.pgl"]
+        ** Output: JS.nfyy["00to12.sgl"]
+        ** - sorted by acct, mmdd
+        */
+        sortPGLtoSGL();
 
-        error: function (req, stat, err) {
-            console.log("analdtl load failed", req.status,req.statusText);
-            JS.logHtml += "<br>analdtl load failed "+req.status+" "+req.statusText+" "+err;
-            JS.logHtml += "<br>Glrpt-"+JS.year+"/?? Load failed.";
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $.unblockUI();
-            $("#statusfield").html("Glrpt Load Failed.");
-        } /* end error: */
-    });
+        $("#statusfield").html("Glrpt Generating");
+        JS.logHtml += "<br>... generating report";
+        rep = GlrptReportHtml();
+        /* rep = AnaldtlReportHtml("304"); */
+
+
+        end = new Date().getTime();
+        diff = end - start;
+        JS.logHtml += "<br>... time "+ diff;
+        JS.logHtml += "</pre></td></tr></tbody>";
+
+        $("#contentJournal").hide();
+        $("#contentReport").html(""+rep+"");
+        JS.report.cnt = $("#report tbody").length;
+        JS.report.curidx = JS.report.cnt-1;
+        $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
+        /* All TOTAL lines are bold */
+        $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
+
+        $("#contentReport").show();
+        $('html, body').animate({ scrollTop: $(document).height()}, 750);
+
+        $.unblockUI();
+        $("#statusfield").html("Glrpt Done");
+        $("#menuESC").show();
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        console.log("Glrpt load failed");
+        JS.logHtml += "<br>Glrpt-"+JS.year+"/?? Load failed.";
+
+        $.unblockUI();
+        $("#statusfield").html("Glrpt Load Failed.");
+      });
+
+
+
 
 
     $("#statusfield").html("Glrpt...");

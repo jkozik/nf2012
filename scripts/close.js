@@ -116,8 +116,9 @@ function runCloseCommands(buttonID, messageID, messageObj) {
 
     /* Logging */
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Remotely executing "+CloseCommand+"<br>GET "+CloseCommandRestGet;
-    start = new Date().getTime();
+    JS.logHtml += "<br>Report->Close. Remotely executing "+CloseCommand;
+    JS.logHtml += "</pre></td></tr></tbody>";
+
     $.blockUI({ message: '<h4><img src="images/busy.gif" /> running '+CloseCommand+' ...  </h4>' });
 
     $.ajax({"url":CloseCommandRestGet,
@@ -157,17 +158,10 @@ function runCloseCommands(buttonID, messageID, messageObj) {
             /* Logging */
             console.log(CloseCommand+" run returned error", jqXHR.status,jqXHR.statusText);
             $("#statusfield").html(CloseCommand+" run Failed.");
-            JS.logHtml += "<br>"+CloseCommand+" run returned error "+jqXHR.status+" "+jqXHR.statusText;
             JS.logHtml += "<br>"+message;
-            JS.logHtml += "<br>"+jqXHR.responseText;
 
         }) /* end fail */
         .always( function() { 
-            /* Logging */
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
             $.unblockUI();
         }); /* End always */
 

@@ -1,4 +1,4 @@
-/*
+/* 
 ** jsedit.js -- main application script.  Pulled in by index.html
 */
 
@@ -102,53 +102,57 @@ console.log("JS.mm-", JS.mm);
 
 $(document).ready(function(){
 
-/* Setup Journal Entry Display Table Templates */
-//$("#page").append($("#journalTemplate").html());
-/*******************
-console.log("Loading jetmpl.hmtl file.  Should always work!(?)");
-$.get('/jetmpl.html', function(data) {
-    $('#page').append(data);
-    JS.jetmpl = $("#jetmpl");
-    JS.jeformtmpl = $("#jeformtmpl");
-    console.log("jetmpl.html file loaded.  Should setup on JS.logHtml");
+/*
+ * Ajax global events
+ * - put the logging code in global events.
+ * - makes the ajax code cleaner
+ * - timer on all ajax calls
+ */
+
+$(document).ajaxSend(function(evt, xhr, settings) {
+  //console.log("ajaxSend Global Event:", evt, xhr, settings);
+  console.log(settings.type+" "+settings.url+" Sent");
+  start = new Date().getTime();
+  JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+  JS.logHtml += "<br>"+settings.type+" "+settings.url;
 });
-*******************/
-//$.curCSS = function (element, attrib, val) {
-    //$(element).css(attrib, val);
-//};
-//if ( $.attrFn ) { $.attrFn.text = true; } 
-//$.attrFn = $.attrFn || {};
+$(document).ajaxSuccess(function(evt, xhr, settings) {
+  console.log(settings.type+" "+settings.url+" Success");
+  url = settings.url;
+  filename = url.substr(url.lastIndexOf('/') + 1);
+  JS.logHtml += "<br>... "+settings.type+" "+filename+" successful";
+
+});
+$(document).ajaxError(function(evt, xhr, settings, exc) {
+  //console.log("ajaxError Global Event:", evt, xhr, settings);
+  console.log( settings.type+" "+settings.url+" Failed. "+xhr.status+"-"+xhr.statusText);
+  url = settings.url;
+  filename = url.substr(url.lastIndexOf('/') + 1);
+  JS.logHtml += "<br>... "+settings.type+" "+filename+" failed. "+xhr.status+"-"+xhr.statusText;
+});
+$(document).ajaxComplete(function(evt, xhr, settings) {
+  console.log(settings.type+" "+settings.url+" Complete");
+  end = new Date().getTime();
+  diff = end - start;
+  JS.logHtml += "<br>... time "+ diff;
+  JS.logHtml += "</pre></td></tr></tbody>";
+});
+
+/* Setup Journal Entry Display Table Templates */
 /*
 ** Load /jetmpl.html
 ** -- templates for journal entry display and edit forms
 */
 $("#contentJournal").append("<br>Loading /jetmpl.html");
-JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-JS.logHtml += "<br>/jetmpl.html loading";
-JS.logHtml += "</pre></td></tr></tbody>";
 $.ajax({
-    url:'/jetmpl.html',
-    success: function(response) {
-        $("#contentJournal").append("<br>/jetmpl.html load successful.");
-        $('#page').append(response);
-        JS.jetmpl = $("#jetmpl");
-        JS.jeformtmpl = $("#jeformtmpl");
-
-        /* Logging */
-        console.log("jetmpl.html file loaded.  ");
-        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-        JS.logHtml += "<br>/jetmpl.html load successful.";
-        JS.logHtml += "</pre></td></tr></tbody>";
-    },
-    error: function (req, stat, err) {
-        /* so if jetmpl.html doesn't load then not much works.  For now, just log it */
-        /* Logging */
-        console.log("jetmpl.html load failed", req.status,req.statusText);
-        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-        JS.logHtml += "<br>/jetmpl.html load failed "+req.status+req.statusText;
-        JS.logHtml += "</pre></td></tr></tbody>";
-    }
-});
+  url:'/jetmpl.html',
+})
+  .done(function( response ) {
+    $("#contentJournal").append("<br>/jetmpl.html load successful.");
+    $('#page').append(response);
+    JS.jetmpl = $("#jetmpl");
+    JS.jeformtmpl = $("#jeformtmpl");
+  });
     
 
 /* Log base URL; watch for test, real, and SSL verions */
@@ -156,60 +160,46 @@ JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
 JS.logHtml += "<br>JS.jefileRestURI-"+JS.jefileRestURI+"<br>location.href-"+location.href+"<br>JS.year-"+JS.year;
 JS.logHtml += "</pre></td></tr></tbody>";
 
-/* Load Chart of Accounts File for current year */
+/*
+** Load Chart of Accounts File for current year 
+*/
 
 
-    chartRestGET = JS.jefileRestURI +JS.year+"/chart.json";
-    //chartRestGET = JS.jefileRestURI +JS.year+"/chart";
+chartRestGET = JS.jefileRestURI +JS.year+"/chart.json";
+//chartRestGET = JS.jefileRestURI +JS.year+"/chart";
+
+/* Logging */
+$("#contentJournal").append("<br>Loading Chart of Accounts<br>GET "+chartRestGET);
+$.blockUI({ message: '<h4><img src="images/busy.gif" /> Initializing ...  </h4>' });
+
+$.ajax({
+  url: chartRestGET,
+  type: 'GET',
+  dataType: 'json',
+  timeout: (2*1000)
+})
+  .done(function( response, textStatus, jqXHR ) {
+    $.unblockUI();
+    /*
+    ** Put response -> JS.chart
+    */
+    JS.chart = response;
 
     /* Logging */
-    start = new Date().getTime();
-    $("#contentJournal").append("<br>Loading Chart of Accounts<br>GET "+chartRestGET);
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Loading Chart of Accounts<br>GET "+chartRestGET;
-    JS.logHtml += "</pre></td></tr></tbody>";
-
-    $.blockUI({ message: '<h4><img src="images/busy.gif" /> Initializing ...  </h4>' });
-    $.ajax({"url":chartRestGET,
-        "type":"GET",
-        //"dataType":"text", 
-        "dataType":"json", 
-        timeout: (2 * 1000),
-        success: function(response,textStatus, jqXHR) {
-            $.unblockUI();
-            /*
-            ** Put response -> JS.chart
-            */
-            JS.chart = response;
-
-            /* Logging */
-            $("#contentJournal").append("<br>chart... received "+jqXHR.responseText.length+ " bytes");
-            JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-            JS.logHtml += "<br>chart... received "+jqXHR.responseText.length+ " bytes";
-
-
-            chartEntries = (jqXHR.responseText.split(/\r?\n|\r/).length-3).toString();
-
-            /* Logging */
-            $("#contentJournal").append("<br>chart... parsed into "+chartEntries+ " enteries in JS.chart[]");
-            JS.logHtml += "<br>chart... parsed into "+chartEntries+ " enteries in JS.chart[]";
-            end = new Date().getTime();
-            diff = end - start;
-            $("#contentJournal").append("<br>chart... time "+ diff);
-            JS.logHtml += "<br>chart... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $("#statusfield").html("chart Loaded.");
-
-        },
-        error: function (req, stat, err) {
-            console.log("chart load failed", req.status,req.statusText);
-            JS.logHtml += "<br>chart load failed "+req.status+req.statusText;
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $.blockUI({ message: '<h4> Init Timeout.<br>F5 to retry.</h4>' });
-            $("#statusfield").html("chart Load Failed.");
-        }
-    });
-    $("#statusfield").html("chart...");
+    $("#contentJournal").append("<br>chart... received "+jqXHR.responseText.length+ " bytes");
+    JS.logHtml += "<br>... received "+jqXHR.responseText.length+ " bytes";
+    chartEntries = (jqXHR.responseText.split(/\r?\n|\r/).length-3).toString();
+    $("#contentJournal").append("<br>chart... parsed into "+chartEntries+ " enteries in JS.chart[]");
+    JS.logHtml += "<br>... parsed into "+chartEntries+ " enteries in JS.chart[]";
+    $("#contentJournal").append("<br>chart... time "+ diff);
+    $("#statusfield").html("chart Loaded.");
+  })
+  .fail(function( jqXHR, textStatus, errorThrown ) {
+    $.blockUI({ message: '<h4> Init Timeout.<br>F5 to retry.</h4>' });
+    $("#statusfield").html("chart Load Failed.");
+  });
+  
+$("#statusfield").html("chart...");
 
 
 
@@ -334,50 +324,56 @@ function dialogNewSubmit() {
     ** function must define a new file.
     */
     newfilename = JS.jefileRestURI + JS.year + "/" + mm; 
-    console.log("newfilename", newfilename);
+    console.log("File->New", newfilename);
+
+    /* Logging File->New */
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>New.  Creating a new Jefile.";
-    JS.logHtml += "<br>GET "+newfilename;
-    JS.logHtml += "<br>... verify that the new file does not exist";
+    JS.logHtml += "<br>File->New "+newfilename.substr(newfilename.lastIndexOf('/')+ 1); 
+    JS.logHtml += "</pre></td></tr></tbody>";
 
     $.ajax({
-        url: newfilename,
-        complete: function(data) {
-            console.log(data.status);
-            if ( +data.status == 200 ) {
-                /* Logging */
-                $("#dialogError").text("File Already Exisits").show();
-                JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm + " already exists.  New request rejected.";
-                 JS.logHtml += "<br>... status-"+data.status;
-                JS.logHtml += "</pre></td></tr></tbody>";
-                $("#statusfield").html("");
+      url: newfilename
+    })
+      .done(function( response, textStatus, jqXHR ) {
+      
+        /* File->New GET newfilename should return 404, because this is
+        ** a new file name.  200 means it already exisits.  Show a dialog
+        ** box and return.
+        **/
+        $("#dialogError").text("File Already Exisits").show();
+        
+        /* Logging */
+        JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm 
+                   + " already exists.  File->New request rejected.";
+        JS.logHtml += "<br>... status-"+textStatus;
+        $("#statusfield").html("");
+        return false;
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
 
-                return false;
-            } else {
-                $("#contentJournal").html("<table id=\"journal\"></table>");
-                JS.mm = mm;
-                JS.jecnt = 0;
-                JS.curidx = 0;
-                JS.jefile = [];
-                JS.jefileOpen = true;
-                JS.jefileChanged = false;
-                JS.recordsAdded = 0;
-                JS.recordsDeleted = 0;
-                JS.recordsChanged = 0;
-            	
-                /* Logging */
-	        $("#dialog").dialog('close');
-                JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm + "does not exist.  New file created.";
-                JS.logHtml += "</pre></td></tr></tbody>";
-                $("#statusfield").html("JEfile-" + JS.year + "/"+mm+" Opened");
-            }
-        }
-    });
+        /*
+        ** File->New.  newfilename does not exist.  Good.  Let's create it.
+        **/
+        $("#contentJournal").html("<table id=\"journal\"></table>");
+        JS.mm = mm;
+        JS.jecnt = 0;
+        JS.curidx = 0;
+        JS.jefile = [];
+        JS.jefileOpen = true;
+        JS.jefileChanged = false;
+        JS.recordsAdded = 0;
+        JS.recordsDeleted = 0;
+        JS.recordsChanged = 0;
+
+        /* Logging */
+        $("#dialog").dialog('close');
+        JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" 
+                   + mm + " does not exist.  New file created.";
+        $("#statusfield").html("JEfile-" + JS.year + "/"+mm+" Opened");
+      });
 
     $("#statusfield").html("JEfile-"+JS.year+"/"+mm+"...");
     JS.logHtml += "<br>... checking, ajax query sent";
-		
-		
  
 //}); /* end of File->New */
 }
@@ -415,91 +411,103 @@ $('#menuLoad').click(function(){
 
 
 function dialogLoadSubmit() {
-	//mm = $("input#mmfileinput").val();
-	mm = $("input#dialoginp").val();
-	
-	if (mm.length < 2 || mm < '01' || mm > '12') {
-		//$("#mmfiledialogerror").show();
-                $("#dialogError").text("File  01-12 only");
-		$("#dialogError").show();
-		return false;
-	
-	}
-        JS.mmfileinput = mm;  // default for next File menu dialog box
+    /* File->Load */
+    /* Load JE File from PHP server using AJAX */
 
-	//$("#dialogLoad").dialog('close');
-	$("#dialog").dialog('close');
- 	console.log( mm );
+    /*
+    ** Validate dialog box input field.
+    ** It must be a month formated 01-12
+    */
+    mm = $("input#dialoginp").val();
+    if (mm.length < 2 || mm < '01' || mm > '12') {
+        //$("#mmfiledialogerror").show();
+        $("#dialogError").text("File  01-12 only");
+        $("#dialogError").show();
+        return false;
+    }
+    JS.mmfileinput = mm;  // default for next File menu dialog box
+
+    //$("#dialog").dialog('close');
+    console.log( mm );
 	
 	
-		
-/* File->Load */
-/* Load JE File from PHP server using AJAX */
+    /* GET jefileRestGET from PHP server */
 		
     jefileRestGET = JS.jefileRestURI +JS.year+"/"+mm;
+    console.log("File->Load", jefileRestGET);
 
     /* Logging */
-    start = new Date().getTime();
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Loading Jefile-"+JS.year+"/"+mm+"<br>GET "+jefileRestGET;
     $.blockUI({ message: '<h4><img src="images/busy.gif" /> Loading ...  </h4>' });
 
-    //$.getJSON(jefileRestGET,function(response) {
-    $.ajax({"url":jefileRestGET,
-        "type":"GET",
-        "dataType":"json", 
-        success: function(response) {
-            /* Parse response into JS.jefile */
-            JS.jefile = response;
-    
-            
-            /* Logging */
-            JS.logHtml += "<br>... response received";
-            JS.logHtml += "<br>... contents parsed into JS.jefile[]-"+JS.jefile.length+ " entries";
-            //console.log ( "JS.jefile", JS.jefile );
-    
-            /* Format Journal Table */
-            $("#contentJournal").html("<table id=\"journal\"></table>");
-            jehtml = formatJsfrecArrayToHtml ( JS.jefile );
-            $('table#journal').append(jehtml);
-            $("#journal .displayTableEntry:first").addClass("displayTableEntryhighlight");
-            $("#contentJournal").show();
+    /* Logging File->Load */
+    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+    JS.logHtml += "<br>File->Load "+jefileRestGET.substr(jefileRestGET.lastIndexOf('/')+ 1);
+    JS.logHtml += "</pre></td></tr></tbody>";
 
-            /* Set Journal control data - month, current index, record count, change status */
-            JS.mm = mm;
-            JS.curidx = 0;
-            JS.jecnt = JS.jefile.length;
-            JS.jefileOpen = true;
-            JS.jefileChanged = false;
-            JS.recordsAdded = 0;
-            JS.recordsDeleted = 0;
-            JS.recordsChanged = 0;
+    $.ajax({
+      url: jefileRestGET,
+      dataType: "json"
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        $("#dialog").dialog('close');
 
-            $.unblockUI();
-            /* Logging */
-            $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" Loaded. Cnt-"+JS.jecnt);
-            //console.log($('#contentJournal'));
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
+        /*
+        ** File->Load.  GET jefileRestGet.  It's a json formated response.
+        ** Put the response into the JS.jefile data structure. Then format it 
+        ** for display, and show it.
+        */
 
-            //$("body").attr("tabindex",-1).focus();
-            // to find the currently focused element: $(document.activeElement) it took me forever to find this!!
-        }, /* end success: */
-        error: function (req, stat, err) {
-            console.log("file load failed", req.status,req.statusText);
-            JS.logHtml += "<br>file load failed "+req.status+req.statusText;
-            JS.logHtml += "JEfile-"+JS.year+"/"+mm+" Load failed.";
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $.unblockUI();
-            $("#statusfield").html("JeFile Load Failed.");
-        } /* end error: */
-    });
+        JS.jefile = response;
+
+        /* Format Journal Table */
+        $("#contentJournal").html("<table id=\"journal\"></table>");
+        jehtml = formatJsfrecArrayToHtml ( JS.jefile );
+        $('table#journal').append(jehtml);
+        $("#journal .displayTableEntry:first").addClass("displayTableEntryhighlight");
+        $("#contentJournal").show();
+
+        /* Set Journal control data - month, current index, record count, change status */
+        JS.mm = mm;
+        JS.curidx = 0;
+        JS.jecnt = JS.jefile.length;
+        JS.jefileOpen = true;
+        JS.jefileChanged = false;
+        JS.recordsAdded = 0;
+        JS.recordsDeleted = 0;
+        JS.recordsChanged = 0;
+
+        /* Logging */
+        $.unblockUI();
+        JS.logHtml += "<br>... contents parsed into JS.jefile[]-"+JS.jefile.length+ " entries";
+        $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" Loaded. Cnt-"+JS.jecnt);
+
+
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+
+        /*
+        ** File->Load.  jefileRestGet does not exist.  Use must load an existing file, 
+        ** else the File->New command needs to be run first to create it. Just give a simple
+        ** error diagostic.
+        */
+        $("#dialogError").text("File Doesn't Exisits").show();
+        
+        /* Logging */
+        JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm 
+                   + " doesn't exists.  File->Load request failed.";
+        JS.logHtml += "<br>... status-"+textStatus;
+        $("#statusfield").html("JeFile Load Failed.");
+        $.unblockUI();
+        return false;
+      });
+
     $("#statusfield").html("JEfile-"+JS.year+"/"+mm+"...");
- 
-//}); /* end of File->Load */
-}
+    JS.logHtml += "<br>... GETing file, ajax query sent";
+
+
+
+
+}  // End of File->Load
 
 
 
@@ -513,19 +521,22 @@ $('#menuSave').click(function(){
 
     /* Logging */
     console.log("menuSave click function called");
-    start = new Date().getTime();
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Saving JS.jefile";
 
 		
+    /* Nothing open?  Nothing to save, return */
     if (JS.jefileOpen == false) {
         console.log("menuSave:  nothing opened, nothing to save");
+        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+        JS.logHtml += "<br>Saving JS.jefile";
         JS.logHtml += "...nothing opened, nothing to save";
         JS.logHtml += "</pre></td></tr></tbody>";
         $("#foot").text("Save: Nothing Opened. Nothing to Save.");
         return;
+    /* File is open, but contents unchanged.  Nothing to save. */
     } else if (JS.jefileOpen === true && JS.jefileChanged === false) {
         console.log("menuSave:  file opened but nothing has changed, no save" );
+        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+        JS.logHtml += "<br>Saving JS.jefile";
         JS.logHtml += "...file opened but nothing has changed, no save";
         JS.logHtml += "</pre></td></tr></tbody>";
         $("#foot").text("Save: File opened, but nothing has changed.");
@@ -536,46 +547,49 @@ $('#menuSave').click(function(){
     }
     saveFileRestPUT = JS.jefileRestURI  + JS.year + "/" + JS.mm; 
     jefilejson = $.toJSON(JS.jefile);
-    console.log("saveFileRestPUT", saveFileRestPUT);
-    JS.logHtml += "<br>PUT "+saveFileRestPUT;
+    console.log("File->Save ", saveFileRestPUT);
+		
+    /* Logging File->Save */
+    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+    JS.logHtml += "<br>File->Save "+saveFileRestPUT.substr(saveFileRestPUT.lastIndexOf('/')+ 1);
+    JS.logHtml += "</pre></td></tr></tbody>";
+
     $.ajax({
-        url: saveFileRestPUT,
-        type: "PUT",
-        data: {"jefilejson":jefilejson, "jefilename":JS.mm},
-        complete: function(data) {
-            console.log(data.status);
-            if ( +data.status == 200 ) {
+      url: saveFileRestPUT,
+      type: "PUT",
+      data: {"jefilejson":jefilejson, "jefilename":JS.mm}
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        $("#dialog").dialog('close');
 
-                /* Logging */
-                $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" saved. Cnt-"+JS.jecnt);
-                JS.logHtml += "<br>... file saved.  Record count-"+JS.jecnt;
-                JS.logHtml += "<br>... Adds-"+JS.recordsAdded+", Deletes-"+JS.recordsDeleted+", Changes-"+JS.recordsChanged;
-                end = new Date().getTime();
-                diff = end - start;
-                JS.logHtml += "<br>... time "+ diff;
-                JS.logHtml += "</pre></td></tr></tbody>";
-                $("#foot").text("Save: Successful.");
+        /*
+        ** File->Save.  PUT saveFileRestPUT.  
+        ** This should work.  When it does, reset the records add/chg/del counters,
+        ** clear the file changed indicator.
+        */
 
-                JS.jefileOpen = true;
-                JS.jefileChanged = false;
-                JS.recordsAdded = 0;
-                JS.recordsDeleted = 0;
-                JS.recordsChanged = 0;
-                return false;
-            } else {
-                $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" save failed");
-                JS.logHtml += "<br>... save failed.";
-                JS.logHtml += "</pre></td></tr></tbody>";
-                $("#foot").text("Save: Failed.");
-            }
-        }
-    });
+        /* Logging */
+        $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" saved. Cnt-"+JS.jecnt);
+        JS.logHtml += "<br>... file saved.  Record count-"+JS.jecnt;
+        JS.logHtml += "<br>... Adds-"+JS.recordsAdded+", Deletes-"+JS.recordsDeleted+", Changes-"+JS.recordsChanged;
+        $("#foot").text("Save: Successful.");
 
+        JS.jefileOpen = true;
+        JS.jefileChanged = false;
+        JS.recordsAdded = 0;
+        JS.recordsDeleted = 0;
+        JS.recordsChanged = 0;
+        return false;
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" save failed");
+        JS.logHtml += "<br>... save failed.";
+        $("#foot").text("Save: Failed.");
+      });
+
+    JS.logHtml += "<br>... PUTing file, ajax query sent";
     $("#statusfield").html("JEfile-"+JS.year+"/"+mm+" saving...");
     $("#foot").text("Save...");
-    JS.logHtml += "<br>... saving...";
-		
-		
  
 }); /* end of File->Save */
 
@@ -829,36 +843,31 @@ function dialogYankSubmit() {
     /*
     ** Store the JS.YankPutArray on server.  Allows for crossbrowser, cross-year cut/paste
     */
-    start = new Date().getTime();
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Saving JS.YankPutArray";
+    JS.logHtml += "<br>Saving JS.YankPutArray part of Edit->Put operation";
+    JS.logHtml += "</pre></td></tr></tbody>";
     yankPutArrayPUT = JS.jefileRestURI  + "yankput.json";
     yankputjson = $.toJSON(JS.YankPutArray);
-    console.log("yankPutArrayPUT", yankPutArrayPUT);
+    console.log("Edit->Yank", yankPutArrayPUT);
     JS.logHtml += "<br>PUT "+yankPutArrayPUT;
     $.ajax({
-        url: yankPutArrayPUT,
-        type: "PUT",
-        data: {"yankputjson":yankputjson},
-        complete: function(data) {
-            console.log(data.status);
-            if ( +data.status == 200 ) {
+      url: yankPutArrayPUT,
+      type: "PUT",
+      data: {"yankputjson":yankputjson},
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        /* Logging */
+        $("#statusfield").html("YankPut-saved. Cnt-"+JS.YankPutArrayCnt);
+        $("#foot").text("Yank: copied "+JS.YankPutArrayCnt+" Journal Entries.");
+        return false;
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        $("#statusfield").html("YankPut- save failed");
+        JS.logHtml += "<br>... save failed.";
 
-                /* Logging */
-                $("#statusfield").html("YankPut-saved. Cnt-"+JS.YankPutArrayCnt);
-                $("#foot").text("Yank: copied "+JS.YankPutArrayCnt+" Journal Entries.");
-                end = new Date().getTime();
-                diff = end - start;
-                JS.logHtml += "<br>... time "+ diff;
-                JS.logHtml += "</pre></td></tr></tbody>";
-                return false;
-            } else {
-                $("#statusfield").html("YankPut- save failed");
-                JS.logHtml += "<br>... save failed.";
-                JS.logHtml += "</pre></td></tr></tbody>";
-            }
-        }
-    });
+      });
+
+
 
     $("#statusfield").html("YankPut-saving...");
     JS.logHtml += "<br>... saving...";
@@ -893,55 +902,46 @@ $('#menuPut').click(function() {
     yankPutArrayGET = JS.jefileRestURI  + "yankput.json";
 
     /* Logging */
-    start = new Date().getTime();
     JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Loading JS.YankPutArray<br>GET "+yankPutArrayGET;
+    JS.logHtml += "<br>Loading JS.YankPutArray part of Edit->Put operation<br>";
+    JS.logHtml += "</pre></td></tr></tbody>";
     console.log("yankPutArrayGET", yankPutArrayGET);
 
-    $.ajax({"url":yankPutArrayGET,
-        "type":"GET",
-        "dataType":"json",
-        success: function(response) {
-            /* Parse response into JS.YankPutArray */
-            JS.YankPutArray = response;
-            JS.YankPutArrayCnt = JS.YankPutArray.length;
+    $.ajax({
+      url: yankPutArrayGET,
+      type: "GET",
+      dataType: "json"
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        /* Parse response into JS.YankPutArray */
+        JS.YankPutArray = response;
+        JS.YankPutArrayCnt = JS.YankPutArray.length;
+
+        /* Logging */
+        JS.logHtml += "<br>... contents parsed into JS.YankPutArray[]-"+JS.YankPutArrayCnt+ " entries";
+        console.log ( "JS.YankPutArray", JS.YankPutArray );
+        $("#statusfield").html("YankPut-Loaded. Cnt-"+JS.YankPutArrayCnt);
+
+        if ( JS.YankPutArrayCnt > 9) {
+            JS.logHtml += "<br>... YankPut Count > 9.  Something is wrong. Put exiting.";
+            $("#foot").text("Put Fail.  YankPut contains more than 9 entries.");
+            return;
+        }
+
+        /* Perform the Put function */
+        putYankPutIntoJefileAtCuridx();
+
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        /* Logging */
+        $("#statusfield").html("YankPut-load failed");
+        $("#foot").text("Put Fail.  YankPut couldn't be retrieved from server");
+      });
 
 
-            /* Logging */
-            JS.logHtml += "<br>... response received";
-            JS.logHtml += "<br>... contents parsed into JS.YankPutArray[]-"+JS.YankPutArrayCnt+ " entries";
-            console.log ( "JS.YankPutArray", JS.YankPutArray );
-            $("#statusfield").html("YankPut-Loaded. Cnt-"+JS.YankPutArrayCnt);
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
 
-            if ( JS.YankPutArrayCnt > 9) { 
-                JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-                JS.logHtml += "<br>... YankPut Count > 9.  Something is wrong. Put exiting.";
-                JS.logHtml += "</pre></td></tr></tbody>";
-                $("#foot").text("Put Fail.  YankPut contains more than 9 entries.");
-                return;
-            }
-            
-
-            /* Perform the Put function */
-            putYankPutIntoJefileAtCuridx();
-
-            
-        }, /* end success: */
-        error: function (req, stat, err) {
-            /* Logging */
-            console.log("YankPut load failed", req.status,req.statusText);
-            JS.logHtml += "<br>....file load failed "+req.status+req.statusText;
-            $("#statusfield").html("YankPut-load failed");
-            $("#foot").text("Put Fail.  YankPut couldn't be retrieved from server");
-            JS.logHtml += "</pre></td></tr></tbody>";
-        } /* end error: */
-    });
     $("#statusfield").html("YankPut-loading");
-    JS.logHtml += "<br>... loading...";
+    JS.logHtml += "<br>... loading YankPut...";
 
 
 });
@@ -958,9 +958,7 @@ function putYankPutIntoJefileAtCuridx() {
 
     if ( JS.YankPutArrayCnt <= 0 ) {
         /* Logging */
-        JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-        JS.logHtml += "<br>Put: nothing to Put, no Journal Entries Yanked";
-        JS.logHtml += "</pre></td></tr></tbody>";
+        JS.logHtml += "<br>... Put: nothing to Put, no Journal Entries Yanked";
         $("#foot").text("Put Fail.  No prior Yank operation.");
         return;
     }
@@ -1019,9 +1017,7 @@ function putYankPutIntoJefileAtCuridx() {
         scrollupIfElemDoesntFullyFitInView(firstnewput, 300);
     }
     /* Logging */
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Put: added "+JS.YankPutArrayCnt+" Journal Entries.";
-    JS.logHtml += "</pre></td></tr></tbody>";
+    JS.logHtml += "<br>... Put: added "+JS.YankPutArrayCnt+" Journal Entries.";
     $("#foot").text("Put: added "+JS.YankPutArrayCnt+" Journal Entries.");
 
 };
@@ -1098,71 +1094,69 @@ function dialogAnaldtlSubmit() {
 
     jefileRestGET = JS.jefileRestURI + JS.year;
 
-    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
-    JS.logHtml += "<br>Generating Analdtl Report for account-"+acct+"<br>GET "+jefileRestGET;
-    start = new Date().getTime();
     $.blockUI({ message: '<h4><img src="images/busy.gif" /> Loading ...  </h4>' });
 
-    $.ajax({"url":jefileRestGET,
-        "type":"GET",
-        "dataType":"json", 
-        success: function(data) {
-            JS.logHtml += "<br>... received "+data.length+" bytes.";
-            JS.nfyy = data;
+    /* Logging Report->Analdtl */
+    JS.logHtml += "<tbody class=\"displayTableEntry\"><tr><td><pre>";
+    JS.logHtml += "<br>Report->Analdtl "+jefileRestGET.substr(jefileRestGET.lastIndexOf('/')+ 1);
+    JS.logHtml += "</pre></td></tr></tbody>";
 
-            $("#statusfield").html("Analdtl Loaded");
-            JS.logHtml += "<br>... sorting data";
+    $.ajax({
+      url: jefileRestGET,
+      type: "GET",
+      dataType: "json"
+    })
+      .done(function( response, textStatus, jqXHR ) {
+        JS.logHtml += "<br>... received "+jqXHR.responseText.length+" bytes.";
+        JS.nfyy = response;
 
-            /*
-            ** Input: JS.nfyy["01" - "12"]
-            ** Output: JS.nfyy["00.pgl" - "12.pgl"]
-            */
-            transformMMtoPGL();
+        $("#statusfield").html("Analdtl Loaded");
+        JS.logHtml += "<br>... sorting data";
 
-            /* Log XX.pgl record counts */
-            MMcnt = "<br>... MM / Count";
-            $.each(JS.nfyy, function (key,value) {
-                if(key.length==2){
-                    MMcnt += "<br>    "+key+" / "+value.length;
-                }
-            });
-            JS.logHtml += MMcnt;
+        /*
+        ** Input: JS.nfyy["01" - "12"]
+        ** Output: JS.nfyy["00.pgl" - "12.pgl"]
+        */
+        transformMMtoPGL();
 
-            $("#statusfield").html("Analdtl Generating");
-            JS.logHtml += "<br>... generating report";
-            rep = AnaldtlReportHtml(acct);
+        /* Log XX.pgl record counts */
+        MMcnt = "<br>... MM / Count";
+        $.each(JS.nfyy, function (key,value) {
+            if(key.length==2){
+                MMcnt += "<br>    "+key+" / "+value.length;
+            }
+        });
+        JS.logHtml += MMcnt;
+
+        $("#statusfield").html("Analdtl Generating");
+        JS.logHtml += "<br>... generating report";
+        rep = AnaldtlReportHtml(acct);
 
 
-            end = new Date().getTime();
-            diff = end - start;
-            JS.logHtml += "<br>... time "+ diff;
-            JS.logHtml += "</pre></td></tr></tbody>";
 
-            $("#contentJournal").hide();
-            $("#contentReport").html(""+rep+"");
+        $("#contentJournal").hide();
+        $("#contentReport").html(""+rep+"");
 
-            /* All TOTAL lines are bold */
-            $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
+        /* All TOTAL lines are bold */
+        $("#report tbody tr td:contains(TOTAL)").css("font-weight","900")
 
-            JS.report.cnt = $("#report tbody").length;
-            JS.report.curidx = JS.report.cnt-1;
-            $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
-            $("#contentReport").show();
-            $('html, body').animate({ scrollTop: $(document).height()}, 750); 
+        JS.report.cnt = $("#report tbody").length;
+        JS.report.curidx = JS.report.cnt-1;
+        $("#report .displayTableEntry:last").addClass("displayTableEntryhighlight");
+        $("#contentReport").show();
+        $('html, body').animate({ scrollTop: $(document).height()}, 750);
 
-            $.unblockUI();
-            $("#statusfield").html("Analdtl Done");
-            $("#menuESC").show();
-        }, /* end success: */
-        error: function (req, stat, err) {
-            console.log("analdtl load failed", req.status,req.statusText);
-            JS.logHtml += "<br>analdtl load failed "+req.status+" "+req.statusText+" "+err;
-            JS.logHtml += "<br>Analdtl-"+JS.year+"/?? Load failed.";
-            JS.logHtml += "</pre></td></tr></tbody>";
-            $.unblockUI();
-            $("#statusfield").html("Analdtl Load Failed.");
-        } /* end error: */
-    });
+        $.unblockUI();
+        $("#statusfield").html("Analdtl Done");
+        $("#menuESC").show();
+
+
+      })
+      .fail(function( jqXHR, textStatus, errorThrown ) {
+        /* Logging */
+        $.unblockUI();
+        $("#statusfield").html("Analdtl Load Failed.");
+      });
 
 
     $("#statusfield").html("Analdtl...");
@@ -1671,8 +1665,7 @@ return rep;
         vallen = val.length;
         maxlength=$(this).attr('maxlength');
         classinp=$(this).attr('class');
-        idx = JS.inpfields.index(this);
-        nextfld = JS.inpfields.eq(idx+1);
+        idx = JS.inpfields.index(this); nextfld = JS.inpfields.eq(idx+1);
         console.log("input keyup. classinp-'%s' key=%d val='%s' vallen=%d idx=%d"
                     ,classinp,key, val,vallen,idx);
         isShiftKey = evt.shiftKey;
