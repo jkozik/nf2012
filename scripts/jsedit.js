@@ -83,6 +83,8 @@ console.log("urlParams[year]", urlParams["year"]);
 
 if (urlParams["year"] !== undefined) {
     JS.year = urlParams["year"];
+} else {
+    JS.year = currentYear;
 }
 console.log("JS.year-", JS.year);
 
@@ -345,7 +347,8 @@ function dialogNewSubmit() {
         /* Logging */
         JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm 
                    + " already exists.  File->New request rejected.";
-        JS.logHtml += "<br>... status-"+textStatus;
+        JS.logHtml += "<br>... status-"+jqXHR.status;
+        console.log("File->New done-", jqXHR);
         $("#statusfield").html("");
         return false;
       })
@@ -495,7 +498,7 @@ function dialogLoadSubmit() {
         /* Logging */
         JS.logHtml += "<br>... the Jefile-"+ JS.year + "/" + mm 
                    + " doesn't exists.  File->Load request failed.";
-        JS.logHtml += "<br>... status-"+textStatus;
+        JS.logHtml += "<br>... status-"+jqXHR.status;
         $("#statusfield").html("JeFile Load Failed.");
         $.unblockUI();
         return false;
